@@ -15,6 +15,7 @@ export interface AppSettings {
   locationCity: string;
   locationCountry: string;
   timeFormat: '12h' | '24h';
+  isAuthenticated: boolean;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -29,6 +30,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   locationCity: 'London',
   locationCountry: 'UK',
   timeFormat: '12h',
+  isAuthenticated: false,
 };
 
 export const SettingsService = {
