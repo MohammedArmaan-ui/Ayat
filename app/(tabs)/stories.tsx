@@ -50,7 +50,6 @@ export default function StoriesScreen() {
                   <Text style={[styles.categoryBadge, { color: theme.primary, backgroundColor: theme.background }]}>
                     {story.category}
                   </Text>
-                  <Text style={[styles.readTime, { color: theme.textSecondary }]}>{story.readTime}</Text>
                 </View>
                 <Text style={[styles.storyTitle, { color: theme.text }]}>{story.title}</Text>
                 <Text style={[styles.storySubtitle, { color: theme.textSecondary }]} numberOfLines={2}>

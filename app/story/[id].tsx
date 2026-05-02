@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, ScrollView, useColorScheme, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, Clock } from 'lucide-react-native';
+import { ArrowLeft } from 'lucide-react-native';
 
 import { Text } from '@/components/Themed';
 import { Colors } from '../../src/theme/colors';
@@ -55,10 +55,7 @@ export default function StoryDetailScreen() {
           <Text style={[styles.categoryBadge, { color: theme.primary, backgroundColor: theme.surface }]}>
             {story.category}
           </Text>
-          <View style={styles.timeContainer}>
-            <Clock size={14} color={theme.textSecondary} />
-            <Text style={[styles.readTime, { color: theme.textSecondary }]}>{story.readTime}</Text>
-          </View>
+
         </View>
 
         <Text style={[styles.title, { color: theme.text }]}>{story.title}</Text>
