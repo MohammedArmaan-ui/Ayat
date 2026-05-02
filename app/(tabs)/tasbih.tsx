@@ -237,8 +237,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 24,
+    paddingHorizontal: 24,
     paddingTop: 60,
+    paddingBottom: 10,
   },
   statsContainer: {
     flex: 1,
@@ -268,7 +269,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     alignItems: 'center',
-    paddingTop: 20,
+    paddingTop: 0,
   },
   phraseContainer: {
     alignItems: 'center',
