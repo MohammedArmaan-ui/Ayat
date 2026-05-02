@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, ScrollView, TouchableOpacity, View, useColorScheme, Switch, TextInput } from 'react-native';
-import { Moon, Sun, Type, Globe, Info, Volume2, BookOpen, MapPin, Clock } from 'lucide-react-native';
+import { Moon, Sun, Type, Globe, Info, Volume2, BookOpen, MapPin, Clock, LogOut } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 
 import { Text } from '@/components/Themed';
 import { Colors } from '../../src/theme/colors';
@@ -9,6 +10,7 @@ import { SettingsService, AppSettings, AppTheme } from '../../src/services/setti
 export default function SettingsScreen() {
   const systemColorScheme = useColorScheme();
   const [settings, setSettings] = useState<AppSettings | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     loadSettings();
@@ -22,6 +24,11 @@ export default function SettingsScreen() {
   const updateSetting = async (key: keyof AppSettings, value: any) => {
     await SettingsService.updateSetting(key, value);
     setSettings(prev => prev ? { ...prev, [key]: value } : null);
+  };
+
+  const handleLogout = async () => {
+    await SettingsService.updateSetting('isAuthenticated', false);
+    router.replace('/login');
   };
 
   if (!settings) return null;
@@ -203,6 +210,16 @@ export default function SettingsScreen() {
           </View>
           <Text style={{ color: theme.textSecondary }}>1.0.0 (Ayat)</Text>
         </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: theme.primary }]}>Account</Text>
+        <TouchableOpacity style={[styles.settingRow, { borderBottomColor: theme.border, borderBottomWidth: 0 }]} onPress={handleLogout}>
+          <View style={styles.settingInfo}>
+            <LogOut size={20} color="#ef4444" />
+            <Text style={[styles.settingLabel, { color: '#ef4444' }]}>Sign Out</Text>
+          </View>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.footer}>
