@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { StyleSheet, FlatList, View, useColorScheme } from 'react-native';
 import { Bookmark as BookmarkIcon } from 'lucide-react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 
 import { Text } from '@/components/Themed';
 import { AyahCard } from '../../src/components/AyahCard';
@@ -13,6 +13,7 @@ export default function BookmarksScreen() {
   const [bookmarks, setBookmarks] = useState<Ayah[]>([]);
   const colorScheme = useColorScheme() ?? 'light';
   const theme = (Colors as any)[colorScheme] || Colors.light;
+  const router = useRouter();
 
   useFocusEffect(
     useCallback(() => {
@@ -44,6 +45,12 @@ export default function BookmarksScreen() {
           <AyahCard 
             ayah={item} 
             isDark={colorScheme === 'dark'}
+            onPlay={() => {
+              router.replace({
+                pathname: '/(tabs)',
+                params: { surahId: item.surah_id }
+              });
+            }}
           />
         )}
         ListEmptyComponent={

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, FlatList, View, TouchableOpacity, useColorScheme, ActivityIndicator, Alert } from 'react-native';
-import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState, useCallback } from 'react';
+import { StyleSheet, FlatList, View, TouchableOpacity, useColorScheme, ActivityIndicator, Alert, Image } from 'react-native';
+import { Stack, useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { Search, Settings, ChevronDown } from 'lucide-react-native';
 
 import { Text } from '@/components/Themed';
@@ -9,6 +9,7 @@ import { AudioController } from '../../src/components/AudioController';
 import { ReflectionModal } from '../../src/components/ReflectionModal';
 import { QuranService } from '../../src/services/quranService';
 import { audioService } from '../../src/services/audioService';
+import { SettingsService, AppSettings } from '../../src/services/settingsService';
 import { Surah, Ayah } from '../../src/models/types';
 import { Colors } from '../../src/theme/colors';
 
@@ -23,10 +24,22 @@ export default function ReaderScreen() {
   const [reflectionVisible, setReflectionVisible] = useState(false);
   const [reflectionAyah, setReflectionAyah] = useState<Ayah | null>(null);
   const [loopingAyahId, setLoopingAyahId] = useState<number | null>(null);
+  const [settings, setSettings] = useState<AppSettings | null>(null);
   
-  const colorScheme = useColorScheme() ?? 'light';
-  const theme = (Colors as any)[colorScheme] || Colors.light;
+  const systemColorScheme = useColorScheme() ?? 'light';
+  const theme = settings ? (Colors as any)[settings.theme] : (Colors as any)[systemColorScheme];
   const router = useRouter();
+
+  useFocusEffect(
+    useCallback(() => {
+      loadSettings();
+    }, [])
+  );
+
+  const loadSettings = async () => {
+    const s = await SettingsService.getSettings();
+    setSettings(s);
+  };
 
   useEffect(() => {
     loadData();
@@ -35,6 +48,10 @@ export default function ReaderScreen() {
   const loadData = async () => {
     setLoading(true);
     try {
+      const s = await SettingsService.getSettings();
+      setSettings(s);
+
+
       const surahs = await QuranService.getSurahs();
       if (surahs.length > 0) {
         const id = surahId ? parseInt(surahId as string) : 1;
@@ -61,7 +78,7 @@ export default function ReaderScreen() {
   const handlePlayAyah = async (ayah: Ayah) => {
     setActiveAyah(ayah);
     setIsAudioPlaying(true);
-    await audioService.playAyah(ayah.surah_id, ayah.ayah_number);
+    await audioService.playAyah(ayah.surah_id, ayah.ayah_number, settings?.selectedSpeaker);
   };
 
   const handleBookmark = async (ayahId: number) => {
@@ -103,14 +120,34 @@ export default function ReaderScreen() {
   };
 
   const handleSkip = async (direction: 'next' | 'prev') => {
-    if (!activeAyah) return;
+    if (!activeAyah || !currentSurah) return;
     const currentIndex = ayahs.findIndex(a => a.id === activeAyah.id);
     let nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
     
     if (nextIndex >= 0 && nextIndex < ayahs.length) {
       handlePlayAyah(ayahs[nextIndex]);
+    } else if (direction === 'next') {
+      // Last ayah of current surah, go to next surah
+      const nextSurahId = currentSurah.id < 114 ? currentSurah.id + 1 : 1;
+      router.setParams({ surahId: nextSurahId.toString() });
+      // We'll need to auto-play the first ayah of the new surah once loaded
+      // This is handled by a separate effect
     }
   };
+
+  useEffect(() => {
+    audioService.setOnFinishedListener(() => {
+      handleSkip('next');
+    });
+    return () => audioService.setOnFinishedListener(null);
+  }, [activeAyah, ayahs, currentSurah]);
+
+  // Effect to handle auto-play when switching surahs via auto-play
+  useEffect(() => {
+    if (isAudioPlaying && ayahs.length > 0 && activeAyah?.surah_id !== currentSurah?.id) {
+      handlePlayAyah(ayahs[0]);
+    }
+  }, [ayahs]);
 
   if (loading) {
     return (
@@ -126,6 +163,11 @@ export default function ReaderScreen() {
         options={{
           headerTitle: () => (
             <TouchableOpacity style={styles.headerTitle} onPress={() => router.push('/surahs')}>
+              <Image 
+                source={require('../../assets/images/icon.png')} 
+                style={styles.logo}
+                resizeMode="contain"
+              />
               <Text style={[styles.surahName, { color: theme.primary }]}>
                 {currentSurah?.name_transliteration || 'Loading...'}
               </Text>
@@ -153,9 +195,13 @@ export default function ReaderScreen() {
         renderItem={({ item }) => (
           <AyahCard 
             ayah={item} 
-            isDark={colorScheme === 'dark'}
+            isDark={settings?.theme === 'dark' || (settings?.theme === undefined && systemColorScheme === 'dark')}
             isBookmarked={bookmarkedIds.has(item.id)}
             isLooping={loopingAyahId === item.id}
+            fontSize={settings?.fontSize}
+            showTranslationEnabled={settings?.translationEnabled}
+            transliterationEnabled={settings?.transliterationEnabled}
+            wordByWordEnabled={settings?.wordByWordEnabled}
             onPlay={() => handlePlayAyah(item)}
             onBookmark={() => handleBookmark(item.id)}
             onReflect={() => {
@@ -218,6 +264,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  logo: {
+    width: 32,
+    height: 32,
+    marginRight: 10,
+    borderRadius: 8,
   },
   surahName: {
     fontSize: 18,

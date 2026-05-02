@@ -9,6 +9,10 @@ interface AyahCardProps {
   isDark?: boolean;
   isBookmarked?: boolean;
   isLooping?: boolean;
+  fontSize?: number;
+  showTranslationEnabled?: boolean;
+  transliterationEnabled?: boolean;
+  wordByWordEnabled?: boolean;
   onPlay?: () => void;
   onBookmark?: () => void;
   onReflect?: () => void;
@@ -18,6 +22,12 @@ interface AyahCardProps {
 export const AyahCard: React.FC<AyahCardProps> = ({ 
   ayah, 
   isDark = false,
+  isBookmarked = false,
+  isLooping = false,
+  fontSize = 24,
+  showTranslationEnabled = true,
+  transliterationEnabled = true,
+  wordByWordEnabled = false,
   onPlay,
   onBookmark,
   onReflect,
@@ -70,11 +80,27 @@ export const AyahCard: React.FC<AyahCardProps> = ({
         onPress={() => setShowTranslation(!showTranslation)}
         style={styles.content}
       >
-        <Text style={[styles.arabicText, { color: theme.text }]}>
+        <Text style={[styles.arabicText, { color: theme.text, fontSize }]}>
           {ayah.text_uthmani}
         </Text>
         
-        {showTranslation && ayah.translation && (
+        {transliterationEnabled && ayah.transliteration && (
+          <View style={styles.transliterationContainer}>
+            <Text style={[styles.transliterationText, { color: theme.secondary }]}>
+              {ayah.transliteration}
+            </Text>
+          </View>
+        )}
+        
+        {wordByWordEnabled && (
+          <View style={styles.wbwContainer}>
+            <Text style={[styles.wbwText, { color: theme.primary }]}>
+              [ Word-by-word analysis active ]
+            </Text>
+          </View>
+        )}
+        
+        {(showTranslation || showTranslationEnabled) && ayah.translation && (
           <View style={styles.translationContainer}>
             <View style={[styles.divider, { backgroundColor: theme.border }]} />
             <Text style={[styles.translationText, { color: theme.textSecondary }]}>
@@ -147,5 +173,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     textAlign: 'left',
+  },
+  transliterationContainer: {
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  transliterationText: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    lineHeight: 20,
+  },
+  wbwContainer: {
+    marginTop: 8,
+    padding: 8,
+    backgroundColor: 'rgba(16, 185, 129, 0.05)',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  wbwText: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    fontWeight: 'bold',
   },
 });

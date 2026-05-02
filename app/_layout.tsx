@@ -8,7 +8,9 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { initDatabase } from '../src/database/db';
+import { Audio as ExpoAudio } from 'expo-av';
 import { QuranService } from '../src/services/quranService';
+import { CustomSplashScreen } from '../src/components/CustomSplashScreen';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -25,10 +27,26 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [dbReady, setDbReady] = useState(false);
+  const [isSplashFinished, setIsSplashFinished] = useState(false);
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font,
   });
+
+  useEffect(() => {
+    async function setupAudio() {
+      try {
+        await ExpoAudio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
+          playThroughEarpieceAndroid: false,
+        });
+      } catch (e) {
+        console.error('Audio setup error:', e);
+      }
+    }
+    setupAudio();
+  }, []);
 
   useEffect(() => {
     async function setup() {
@@ -50,13 +68,19 @@ export default function RootLayout() {
   }, [error]);
 
   useEffect(() => {
-    if (loaded && dbReady) {
+    if (loaded) {
       SplashScreen.hideAsync();
     }
-  }, [loaded, dbReady]);
+  }, [loaded]);
 
   if (!loaded || !dbReady) {
     return null;
+  }
+
+  if (!isSplashFinished) {
+    return (
+      <CustomSplashScreen onFinish={() => setIsSplashFinished(true)} />
+    );
   }
 
   return <RootLayoutNav />;

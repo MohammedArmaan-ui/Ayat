@@ -25,7 +25,8 @@ export const initDatabase = async () => {
       hizb INTEGER,
       rub_el_hizb INTEGER,
       sajdah BOOLEAN,
-      FOREIGN KEY(surah_id) REFERENCES surah(id)
+      FOREIGN KEY(surah_id) REFERENCES surah(id),
+      UNIQUE(surah_id, ayah_number)
     );
 
     CREATE TABLE IF NOT EXISTS translation (
@@ -59,6 +60,10 @@ export const initDatabase = async () => {
       ayah_id INTEGER,
       status TEXT,
       last_access DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT
     );
   `);
 };

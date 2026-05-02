@@ -1,22 +1,25 @@
 import { Audio } from 'expo-av';
+import { SURAH_DATA } from '../constants/surahData';
 
 class AudioService {
   private sound: Audio.Sound | null = null;
   private isPlaying: boolean = false;
+  private isLooping: boolean = false;
+  private onFinishedListener: (() => void) | null = null;
 
-  async playAyah(surahId: number, ayahNumber: number) {
+  async playAyah(surahId: number, ayahNumber: number, speaker: string = 'ar.alafasy') {
     if (this.sound) {
       await this.sound.unloadAsync();
     }
 
-    // Mock URL for Al-Fatiha 1 from Alafasy
-    // Real app would fetch from an API or local storage
-    const url = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${this.getGlobalAyahNumber(surahId, ayahNumber)}.mp3`;
+    const globalAyah = this.getGlobalAyahNumber(surahId, ayahNumber);
+    const url = `https://cdn.islamic.network/quran/audio/128/${speaker}/${globalAyah}.mp3`;
     
     try {
       const { sound } = await Audio.Sound.createAsync(
         { uri: url },
-        { shouldPlay: true, isLooping: this.isLooping }
+        { shouldPlay: true, isLooping: this.isLooping },
+        this.handlePlaybackStatusUpdate.bind(this)
       );
       this.sound = sound;
       this.isPlaying = true;
@@ -25,7 +28,18 @@ class AudioService {
     }
   }
 
-  private isLooping: boolean = false;
+  private handlePlaybackStatusUpdate(status: any) {
+    if (status.didJustFinish && !status.isLooping) {
+      this.isPlaying = false;
+      if (this.onFinishedListener) {
+        this.onFinishedListener();
+      }
+    }
+  }
+
+  setOnFinishedListener(listener: (() => void) | null) {
+    this.onFinishedListener = listener;
+  }
 
   setLooping(loop: boolean) {
     this.isLooping = loop;
@@ -59,11 +73,12 @@ class AudioService {
     return this.isPlaying;
   }
 
-  private getGlobalAyahNumber(surahId: number, ayahNumber: number) {
-    // Very simplified global ayah number for mock
-    // In a real app, this would be looked up from a table
-    if (surahId === 1) return ayahNumber;
-    return 7 + ayahNumber; // Assuming Surah 2 starts after 7 ayahs of Surah 1
+  private getGlobalAyahNumber(surahId: number, ayahNumber: number): number {
+    let count = 0;
+    for (let i = 0; i < surahId - 1; i++) {
+      count += SURAH_DATA[i].ayah_count;
+    }
+    return count + ayahNumber;
   }
 }
 

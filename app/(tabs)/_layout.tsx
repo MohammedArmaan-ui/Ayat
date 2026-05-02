@@ -1,13 +1,25 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { BookOpen, Bookmark, Settings } from 'lucide-react-native';
+import { BookOpen, Bookmark, Settings, Clock, RefreshCw } from 'lucide-react-native';
 import { useColorScheme } from 'react-native';
 
 import { Colors } from '../../src/theme/colors';
+import { SettingsService, AppSettings } from '../../src/services/settingsService';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme() ?? 'light';
-  const theme = (Colors as any)[colorScheme] || Colors.light;
+  const [settings, setSettings] = React.useState<AppSettings | null>(null);
+  const systemColorScheme = useColorScheme() ?? 'light';
+
+  React.useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    const s = await SettingsService.getSettings();
+    setSettings(s);
+  };
+
+  const theme = settings ? (Colors as any)[settings.theme] : (Colors as any)[systemColorScheme];
 
   return (
     <Tabs
@@ -31,6 +43,21 @@ export default function TabLayout() {
         options={{
           title: 'Reader',
           tabBarIcon: ({ color, size }) => <BookOpen size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="prayer"
+        options={{
+          title: 'Prayer',
+          tabBarIcon: ({ color, size }) => <Clock size={size} color={color} />,
+        }}
+      />
+
+      <Tabs.Screen
+        name="tasbih"
+        options={{
+          title: 'Tasbih',
+          tabBarIcon: ({ color, size }) => <RefreshCw size={size} color={color} />,
         }}
       />
       <Tabs.Screen
