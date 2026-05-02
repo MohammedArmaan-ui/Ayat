@@ -70,5 +70,14 @@ export const AuthService = {
     } catch (error) {
       return false;
     }
+  },
+
+  async getFirstUser(): Promise<{ name: string, email: string } | null> {
+    try {
+      const user = await db.getFirstAsync<{ name: string, email: string }>('SELECT name, email FROM users LIMIT 1');
+      return user || null;
+    } catch (error) {
+      return null;
+    }
   }
 };

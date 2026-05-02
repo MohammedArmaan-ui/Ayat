@@ -14,13 +14,23 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [canUseBiometrics, setCanUseBiometrics] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
   const router = useRouter();
   const colorScheme = useColorScheme() ?? 'light';
   const theme = (Colors as any)[colorScheme];
 
   React.useEffect(() => {
     checkBiometrics();
+    loadUser();
   }, []);
+
+  const loadUser = async () => {
+    const user = await AuthService.getFirstUser();
+    if (user) {
+      setUserName(user.name);
+      setEmail(user.email);
+    }
+  };
 
   const checkBiometrics = async () => {
     const hasUsers = await AuthService.hasUsers();
@@ -65,7 +75,9 @@ export default function LoginScreen() {
       <View style={styles.content}>
         <View style={styles.headerContainer}>
           <Image source={require('../assets/images/splash-icon.png')} style={styles.logo} resizeMode="contain" />
-          <Text style={[styles.title, { color: theme.text }]}>Welcome Back</Text>
+          <Text style={[styles.title, { color: theme.text }]}>
+            {userName ? `Welcome Back, ${userName}` : 'Welcome Back'}
+          </Text>
           <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Sign in to continue your spiritual journey</Text>
         </View>
 
