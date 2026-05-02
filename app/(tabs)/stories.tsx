@@ -1,45 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme, Image } from 'react-native';
-import { ChevronRight, BookOpen } from 'lucide-react-native';
+import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme } from 'react-native';
+import { ChevronRight, Book } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 
 import { Text } from '@/components/Themed';
 import { Colors } from '../../src/theme/colors';
 import { SettingsService, AppSettings } from '../../src/services/settingsService';
-
-const MOCK_STORIES = [
-  {
-    id: '1',
-    title: 'The Story of Prophet Musa',
-    subtitle: 'A tale of patience, faith, and standing up to tyranny.',
-    category: 'Prophets',
-    readTime: '10 min',
-  },
-  {
-    id: '2',
-    title: 'Companions of the Cave',
-    subtitle: 'The youth who sought refuge in the cave to protect their faith.',
-    category: 'Quranic Tales',
-    readTime: '7 min',
-  },
-  {
-    id: '3',
-    title: 'The Story of Prophet Nuh',
-    subtitle: 'The steadfastness of a prophet over 950 years of preaching.',
-    category: 'Prophets',
-    readTime: '12 min',
-  },
-  {
-    id: '4',
-    title: 'Salman al-Farsi',
-    subtitle: 'The search for truth across different lands and religions.',
-    category: 'Sahabah',
-    readTime: '8 min',
-  },
-];
+import { STORIES } from '../../src/constants/storiesData';
 
 export default function StoriesScreen() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const systemColorScheme = useColorScheme() ?? 'light';
+  const router = useRouter();
 
   useEffect(() => {
     loadSettings();
@@ -63,14 +35,15 @@ export default function StoriesScreen() {
         </View>
 
         <View style={styles.listContainer}>
-          {MOCK_STORIES.map((story) => (
+          {STORIES.map((story) => (
             <TouchableOpacity 
               key={story.id} 
               style={[styles.storyCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
               activeOpacity={0.8}
+              onPress={() => router.push(`/story/${story.id}`)}
             >
               <View style={[styles.iconContainer, { backgroundColor: theme.background }]}>
-                <BookOpen size={24} color={theme.primary} />
+                <Book size={24} color={theme.primary} />
               </View>
               <View style={styles.cardContent}>
                 <View style={styles.cardHeader}>
