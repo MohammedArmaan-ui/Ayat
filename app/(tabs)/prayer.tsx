@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { StyleSheet, View, ScrollView, useColorScheme, ActivityIndicator, RefreshControl } from 'react-native';
+import { StyleSheet, View, ScrollView, useColorScheme, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { Clock, MapPin, ChevronRight } from 'lucide-react-native';
+import { Clock, MapPin, ChevronRight, CheckCircle2, Circle } from 'lucide-react-native';
 
 import { Text } from '@/components/Themed';
 import { Colors } from '../../src/theme/colors';
@@ -10,25 +10,47 @@ import { PrayerService, PrayerTimings } from '../../src/services/prayerService';
 
 export default function PrayerScreen() {
   const [timings, setTimings] = useState<PrayerTimings | null>(null);
+  const [trackedPrayers, setTrackedPrayers] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [dates, setDates] = useState<Date[]>([]);
+  
   const systemColorScheme = useColorScheme() ?? 'light';
-
   const theme = settings ? (Colors as any)[settings.theme] : (Colors as any)[systemColorScheme];
+
+  useEffect(() => {
+    // Generate next 5 days
+    const nextDates = [];
+    for (let i = 0; i < 5; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      nextDates.push(d);
+    }
+    setDates(nextDates);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
-      loadData();
-    }, [])
+      loadData(selectedDate);
+    }, [selectedDate])
   );
 
-  const loadData = async () => {
+  const loadData = async (date: Date) => {
+    setLoading(true);
     const s = await SettingsService.getSettings();
     setSettings(s);
-    const data = await PrayerService.getPrayerTimes(s.locationCity, s.locationCountry);
+    
+    // Format date as DD-MM-YYYY
+    const dateString = `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getFullYear()}`;
+    
+    const data = await PrayerService.getPrayerTimesByDate(dateString, s.locationCity, s.locationCountry);
     setTimings(data);
+    
+    const tracked = await PrayerService.getTrackedPrayers(dateString);
+    setTrackedPrayers(tracked);
 
     setLoading(false);
     setRefreshing(false);
@@ -43,16 +65,16 @@ export default function PrayerScreen() {
 
   const onRefresh = () => {
     setRefreshing(true);
-    loadData();
+    loadData(selectedDate);
   };
 
-  if (loading) {
-    return (
-      <View style={[styles.centered, { backgroundColor: theme.background }]}>
-        <ActivityIndicator size="large" color={theme.primary} />
-      </View>
-    );
-  }
+  const handleTogglePrayer = async (prayerName: string) => {
+    const isCompleted = !trackedPrayers[prayerName];
+    const dateString = `${selectedDate.getDate().toString().padStart(2, '0')}-${(selectedDate.getMonth() + 1).toString().padStart(2, '0')}-${selectedDate.getFullYear()}`;
+    
+    setTrackedPrayers(prev => ({ ...prev, [prayerName]: isCompleted }));
+    await PrayerService.togglePrayer(dateString, prayerName, isCompleted);
+  };
 
   const prayerIcons: any = {
     Fajr: '🌅',
@@ -84,7 +106,6 @@ export default function PrayerScreen() {
       }
     }
     
-    // If all prayers passed, next one is Fajr tomorrow
     const [fh, fm] = timings.Fajr.split(':').map(Number);
     const fajrTotalMinutes = fh * 60 + fm;
     const diff = (24 * 60 - currentTotalMinutes) + fajrTotalMinutes;
@@ -105,6 +126,8 @@ export default function PrayerScreen() {
     return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
   };
 
+  const isToday = selectedDate.getDate() === new Date().getDate() && selectedDate.getMonth() === new Date().getMonth();
+
   return (
     <ScrollView 
       style={[styles.container, { backgroundColor: theme.background }]}
@@ -118,39 +141,82 @@ export default function PrayerScreen() {
           </Text>
         </View>
         <Text style={[styles.dateText, { color: theme.text }]}>
-          {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+          {selectedDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
         </Text>
       </View>
 
-      <View style={[styles.mainCard, { backgroundColor: theme.primary }]}>
-        <Text style={styles.nextPrayerLabel}>Next Prayer</Text>
-        <Text style={styles.nextPrayerName}>{getNextPrayer().name}</Text>
-        <Text style={styles.nextPrayerTime}>{getNextPrayer().time}</Text>
-        <View style={styles.countdownContainer}>
-          <Clock size={16} color="#FFF" style={{ opacity: 0.8 }} />
-          <Text style={styles.countdownText}>{getNextPrayer().countdown}</Text>
-        </View>
-      </View>
-
-      <View style={styles.prayerList}>
-        {prayers.map((prayer) => (
-          <View 
-            key={prayer} 
-            style={[styles.prayerRow, { backgroundColor: theme.surface, borderColor: theme.border }]}
-          >
-            <View style={styles.prayerInfo}>
-              <Text style={styles.prayerIcon}>{prayerIcons[prayer]}</Text>
-              <Text style={[styles.prayerName, { color: theme.text }]}>{prayer}</Text>
-            </View>
-            <View style={styles.timeInfo}>
-              <Text style={[styles.prayerTime, { color: theme.primary }]}>
-                {timings ? formatTime((timings as any)[prayer]) : '--:--'}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateScroll} contentContainerStyle={styles.dateScrollContent}>
+        {dates.map((d, index) => {
+          const isSelected = d.getDate() === selectedDate.getDate() && d.getMonth() === selectedDate.getMonth();
+          return (
+            <TouchableOpacity 
+              key={index} 
+              onPress={() => setSelectedDate(d)}
+              style={[
+                styles.dateChip, 
+                { 
+                  backgroundColor: isSelected ? theme.primary : theme.surface,
+                  borderColor: isSelected ? theme.primary : theme.border
+                }
+              ]}
+            >
+              <Text style={{ color: isSelected ? '#FFF' : theme.text, fontWeight: isSelected ? 'bold' : 'normal' }}>
+                {index === 0 ? 'Today' : d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' })}
               </Text>
-              <ChevronRight size={18} color={theme.border} />
-            </View>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      {isToday && (
+        <View style={[styles.mainCard, { backgroundColor: theme.primary }]}>
+          <Text style={styles.nextPrayerLabel}>Next Prayer</Text>
+          <Text style={styles.nextPrayerName}>{getNextPrayer().name}</Text>
+          <Text style={styles.nextPrayerTime}>{getNextPrayer().time}</Text>
+          <View style={styles.countdownContainer}>
+            <Clock size={16} color="#FFF" style={{ opacity: 0.8 }} />
+            <Text style={styles.countdownText}>{getNextPrayer().countdown}</Text>
           </View>
-        ))}
-      </View>
+        </View>
+      )}
+
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.primary} />
+        </View>
+      ) : (
+        <View style={[styles.prayerList, !isToday && { marginTop: 24 }]}>
+          {prayers.map((prayer) => (
+            <TouchableOpacity 
+              key={prayer} 
+              activeOpacity={0.8}
+              onPress={() => {
+                if (prayer !== 'Sunrise') {
+                  handleTogglePrayer(prayer);
+                }
+              }}
+              style={[styles.prayerRow, { backgroundColor: theme.surface, borderColor: theme.border }]}
+            >
+              <View style={styles.prayerInfo}>
+                <Text style={styles.prayerIcon}>{prayerIcons[prayer]}</Text>
+                <Text style={[styles.prayerName, { color: theme.text }]}>{prayer}</Text>
+              </View>
+              <View style={styles.timeInfo}>
+                <Text style={[styles.prayerTime, { color: theme.primary, marginRight: prayer === 'Sunrise' ? 0 : 16 }]}>
+                  {timings ? formatTime((timings as any)[prayer]) : '--:--'}
+                </Text>
+                {prayer !== 'Sunrise' && (
+                  trackedPrayers[prayer] ? (
+                    <CheckCircle2 size={24} color={theme.primary} />
+                  ) : (
+                    <Circle size={24} color={theme.border} />
+                  )
+                )}
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       <View style={[styles.infoSection, { backgroundColor: theme.surface + '80' }]}>
         <Text style={[styles.infoTitle, { color: theme.primary }]}>Qibla Direction</Text>
@@ -166,10 +232,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
+  loadingContainer: {
+    padding: 40,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   header: {
     padding: 24,
@@ -188,6 +254,21 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  dateScroll: {
+    maxHeight: 50,
+    marginBottom: 10,
+  },
+  dateScrollContent: {
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  dateChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginRight: 10,
   },
   mainCard: {
     margin: 20,
@@ -266,7 +347,6 @@ const styles = StyleSheet.create({
   prayerTime: {
     fontSize: 16,
     fontWeight: '700',
-    marginRight: 8,
   },
   infoSection: {
     margin: 20,

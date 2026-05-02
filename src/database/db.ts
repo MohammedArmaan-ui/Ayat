@@ -73,5 +73,13 @@ export const initDatabase = async () => {
       password TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS prayer_tracking (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      date TEXT,
+      prayer_name TEXT,
+      completed BOOLEAN DEFAULT 0,
+      UNIQUE(date, prayer_name)
+    );
   `);
 };
