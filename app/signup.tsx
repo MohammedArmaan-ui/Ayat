@@ -5,7 +5,7 @@ import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 
 import { Text } from '@/components/Themed';
 import { Colors } from '../src/theme/colors';
-import { SettingsService } from '../src/services/settingsService';
+import { AuthService } from '../src/services/authService';
 
 export default function SignupScreen() {
   const [name, setName] = useState('');
@@ -17,12 +17,11 @@ export default function SignupScreen() {
   const theme = (Colors as any)[colorScheme];
 
   const handleSignup = async () => {
-    // Mock Signup
-    if (name && email && password) {
-      await SettingsService.updateSetting('isAuthenticated', true);
+    const res = await AuthService.signup(name, email, password);
+    if (res.success) {
       router.replace('/(tabs)');
     } else {
-      alert("Please fill in all fields.");
+      alert(res.message || "An error occurred.");
     }
   };
 

@@ -5,7 +5,7 @@ import { Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 
 import { Text } from '@/components/Themed';
 import { Colors } from '../src/theme/colors';
-import { SettingsService } from '../src/services/settingsService';
+import { AuthService } from '../src/services/authService';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -16,12 +16,11 @@ export default function LoginScreen() {
   const theme = (Colors as any)[colorScheme];
 
   const handleLogin = async () => {
-    // Basic mock authentication
-    if (email && password) {
-      await SettingsService.updateSetting('isAuthenticated', true);
+    const res = await AuthService.login(email, password);
+    if (res.success) {
       router.replace('/(tabs)');
     } else {
-      alert("Please enter both email and password.");
+      alert(res.message || "An error occurred.");
     }
   };
 
