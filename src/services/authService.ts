@@ -61,5 +61,14 @@ export const AuthService = {
       console.error('Login error:', error);
       return { success: false, message: 'An error occurred during login.' };
     }
+  },
+
+  async hasUsers(): Promise<boolean> {
+    try {
+      const user = await db.getFirstAsync<{ id: number }>('SELECT id FROM users LIMIT 1');
+      return !!user;
+    } catch (error) {
+      return false;
+    }
   }
 };

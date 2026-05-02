@@ -1,19 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, TextInput, TouchableOpacity, useColorScheme, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
+import * as LocalAuthentication from 'expo-local-authentication';
+import { Mail, Lock, Eye, EyeOff, Fingerprint } from 'lucide-react-native';
 
 import { Text } from '@/components/Themed';
 import { Colors } from '../src/theme/colors';
 import { AuthService } from '../src/services/authService';
+import { SettingsService } from '../src/services/settingsService';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [canUseBiometrics, setCanUseBiometrics] = useState(false);
   const router = useRouter();
   const colorScheme = useColorScheme() ?? 'light';
   const theme = (Colors as any)[colorScheme];
+
+  React.useEffect(() => {
+    checkBiometrics();
+  }, []);
+
+  const checkBiometrics = async () => {
+    const hasUsers = await AuthService.hasUsers();
+    if (!hasUsers) return;
+
+    const hasHardware = await LocalAuthentication.hasHardwareAsync();
+    const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+    setCanUseBiometrics(hasHardware && isEnrolled);
+  };
 
   const handleLogin = async () => {
     const res = await AuthService.login(email, password);
@@ -21,6 +37,23 @@ export default function LoginScreen() {
       router.replace('/(tabs)');
     } else {
       alert(res.message || "An error occurred.");
+    }
+  };
+
+  const handleBiometricLogin = async () => {
+    try {
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Login to Ayat',
+        fallbackLabel: 'Use Password',
+        disableDeviceFallback: false,
+      });
+
+      if (result.success) {
+        await SettingsService.updateSetting('isAuthenticated', true);
+        router.replace('/(tabs)');
+      }
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -79,6 +112,16 @@ export default function LoginScreen() {
           >
             <Text style={styles.loginButtonText}>Sign In</Text>
           </TouchableOpacity>
+
+          {canUseBiometrics && (
+            <TouchableOpacity 
+              style={[styles.biometricButton, { borderColor: theme.border }]}
+              onPress={handleBiometricLogin}
+            >
+              <Fingerprint color={theme.text} size={24} style={{ marginRight: 12 }} />
+              <Text style={[styles.biometricButtonText, { color: theme.text }]}>Login with Biometrics</Text>
+            </TouchableOpacity>
+          )}
 
           <View style={styles.signupContainer}>
             <Text style={{ color: theme.textSecondary }}>Don't have an account? </Text>
@@ -165,6 +208,19 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  biometricButton: {
+    height: 56,
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  biometricButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   signupContainer: {
     flexDirection: 'row',
