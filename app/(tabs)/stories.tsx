@@ -40,7 +40,7 @@ export default function StoriesScreen() {
               key={story.id} 
               style={[styles.storyCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
               activeOpacity={0.8}
-              onPress={() => router.push(`/story/${story.id}`)}
+              onPress={() => router.push(`/story/${story.id}` as any)}
             >
               <View style={[styles.iconContainer, { backgroundColor: theme.background }]}>
                 <Book size={24} color={theme.primary} />
