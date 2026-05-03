@@ -149,7 +149,7 @@ export default function PrayerScreen() {
     return currentTotalMinutes >= prayerTotalMinutes;
   };
 
-  const isToday = selectedDate.getDate() === new Date().getDate() && selectedDate.getMonth() === new Date().getMonth();
+  const isToday = selectedDate.toDateString() === new Date().toDateString();
 
   return (
     <ScrollView 

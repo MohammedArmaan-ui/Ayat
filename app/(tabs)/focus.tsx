@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, TouchableOpacity, useColorScheme, ScrollView, Animated, Dimensions, Modal, Image } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, useColorScheme, ScrollView, Animated, Dimensions, Modal } from 'react-native';
 import { Shield, Lock, Smartphone, Timer, Check, AlertCircle, X, ExternalLink } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import { Text } from '@/components/Themed';
