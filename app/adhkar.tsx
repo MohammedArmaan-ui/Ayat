@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme, Animated, Dimensions } from 'react-native';
+import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme, Animated, Dimensions, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
-import { Sun, Moon, ChevronRight, CheckCircle2 } from 'lucide-react-native';
+import { Sun, Moon, ChevronRight, CheckCircle2, Play } from 'lucide-react-native';
 
 import { Text } from '@/components/Themed';
 import { Colors } from '../src/theme/colors';
 import { SettingsService, AppSettings } from '../src/services/settingsService';
 import { DUAS, Dua } from '../src/constants/duasData';
+import { audioService } from '../src/services/audioService';
 
 const { width } = Dimensions.get('window');
 
 export default function AdhkarScreen() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [activeTab, setActiveTab] = useState<'Morning' | 'Evening'>('Morning');
+  const [playingId, setPlayingId] = useState<string | null>(null);
   const systemColorScheme = useColorScheme() ?? 'light';
 
   useEffect(() => {
@@ -28,9 +30,36 @@ export default function AdhkarScreen() {
 
   const filteredAdhkar = DUAS.filter(d => d.category === activeTab);
 
+  const playDuaAudio = async (dua: Dua) => {
+    if (!dua.audioId) return;
+    
+    try {
+      setPlayingId(dua.id);
+      const url = `https://www.hisnmuslim.com/audio/ar/${dua.audioId}.mp3`;
+      await audioService.playUrl(url);
+      audioService.setOnFinishedListener(() => {
+        setPlayingId(null);
+      });
+    } catch (e) {
+      setPlayingId(null);
+    }
+  };
+
   const AdhkarCard = ({ item }: { item: Dua }) => (
     <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-      <Text style={[styles.cardTitle, { color: theme.primary }]}>{item.title}</Text>
+      <View style={styles.cardHeader}>
+        <Text style={[styles.cardTitle, { color: theme.primary }]}>{item.title}</Text>
+        <TouchableOpacity 
+          style={[styles.playButton, { backgroundColor: theme.primary + '15' }]} 
+          onPress={() => playDuaAudio(item)}
+        >
+          {playingId === item.id ? (
+            <ActivityIndicator size="small" color={theme.primary} />
+          ) : (
+            <Play size={14} color={theme.primary} fill={theme.primary} />
+          )}
+        </TouchableOpacity>
+      </View>
       <Text style={[styles.arabicText, { color: theme.text }]}>{item.arabic}</Text>
       <Text style={[styles.transliteration, { color: theme.textSecondary }]}>{item.transliteration}</Text>
       <View style={[styles.divider, { backgroundColor: theme.border }]} />
@@ -130,12 +159,25 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 2,
   },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   cardTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 16,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    flex: 1,
+  },
+  playButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   arabicText: {
     fontSize: 24,

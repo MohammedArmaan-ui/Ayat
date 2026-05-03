@@ -28,6 +28,24 @@ class AudioService {
     }
   }
 
+  async playUrl(url: string) {
+    if (this.sound) {
+      await this.sound.unloadAsync();
+    }
+
+    try {
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: url },
+        { shouldPlay: true, isLooping: this.isLooping },
+        this.handlePlaybackStatusUpdate.bind(this)
+      );
+      this.sound = sound;
+      this.isPlaying = true;
+    } catch (e) {
+      console.error('URL Playback error:', e);
+    }
+  }
+
   private handlePlaybackStatusUpdate(status: any) {
     if (status.didJustFinish && !status.isLooping) {
       this.isPlaying = false;

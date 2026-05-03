@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, FlatList, TouchableOpacity, useColorScheme, Animated, Dimensions } from 'react-native';
+import { StyleSheet, View, FlatList, TouchableOpacity, useColorScheme, Animated, Dimensions, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
-import { Heart, Search, Info } from 'lucide-react-native';
+import { Heart, Search, Info, Play, Pause } from 'lucide-react-native';
 
 import { Text } from '@/components/Themed';
 import { Colors } from '../src/theme/colors';
 import { SettingsService, AppSettings } from '../src/services/settingsService';
 import { NAMES_OF_ALLAH, AllahName } from '../src/constants/namesOfAllahData';
+import { audioService } from '../src/services/audioService';
 
 const { width } = Dimensions.get('window');
 
 export default function NamesOfAllahScreen() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [playingId, setPlayingId] = useState<number | null>(null);
   const systemColorScheme = useColorScheme() ?? 'light';
 
   useEffect(() => {
@@ -32,10 +34,36 @@ export default function NamesOfAllahScreen() {
     n.meaning.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const playNameAudio = async (id: number) => {
+    try {
+      setPlayingId(id);
+      const paddedId = id.toString().padStart(3, '0');
+      const url = `https://www.islamicity.org/mediaassets/MP3/other/covers/99-names-of-Allah/${paddedId}.mp3?v06092021`;
+      await audioService.playUrl(url);
+      audioService.setOnFinishedListener(() => {
+        setPlayingId(null);
+      });
+    } catch (e) {
+      setPlayingId(null);
+    }
+  };
+
   const NameCard = ({ item }: { item: AllahName }) => (
     <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-      <View style={[styles.numberContainer, { backgroundColor: theme.primary + '15' }]}>
-        <Text style={[styles.number, { color: theme.primary }]}>{item.id}</Text>
+      <View style={styles.cardHeader}>
+        <View style={[styles.numberContainer, { backgroundColor: theme.primary + '15' }]}>
+          <Text style={[styles.number, { color: theme.primary }]}>{item.id}</Text>
+        </View>
+        <TouchableOpacity 
+          style={[styles.playButton, { backgroundColor: theme.primary + '15' }]} 
+          onPress={() => playNameAudio(item.id)}
+        >
+          {playingId === item.id ? (
+            <ActivityIndicator size="small" color={theme.primary} />
+          ) : (
+            <Play size={14} color={theme.primary} fill={theme.primary} />
+          )}
+        </TouchableOpacity>
       </View>
       <View style={styles.nameInfo}>
         <Text style={[styles.arabicName, { color: theme.text }]}>{item.name}</Text>
@@ -102,12 +130,18 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 16,
     borderWidth: 1,
-    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 2,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 12,
   },
   numberContainer: {
     width: 32,
@@ -115,7 +149,13 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+  },
+  playButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   number: {
     fontSize: 12,
