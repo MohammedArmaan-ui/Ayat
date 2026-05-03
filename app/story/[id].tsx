@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme, Animated, Dimensions } from 'react-native';
+import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme, Animated, Dimensions, Share } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { ChevronLeft, Share2, BookOpen, Clock } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
@@ -34,6 +34,18 @@ export default function StoryDetailScreen() {
     setSettings(s);
   };
 
+  const handleShare = async () => {
+    if (!story) return;
+    try {
+      await Share.share({
+        title: story.title,
+        message: `📖 ${story.title}\n\n${story.content.slice(0, 300)}${story.content.length > 300 ? '…' : ''}\n\n— Shared via Ayat App`,
+      });
+    } catch (error) {
+      console.error('Share failed:', error);
+    }
+  };
+
   const theme = settings ? (Colors as any)[settings.theme] : (Colors as any)[systemColorScheme];
 
   if (!story) {
@@ -64,7 +76,7 @@ export default function StoryDetailScreen() {
           >
             <ChevronLeft size={24} color={theme.text} />
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.iconButton, { backgroundColor: theme.surface }]}>
+          <TouchableOpacity style={[styles.iconButton, { backgroundColor: theme.surface }]} onPress={handleShare}>
             <Share2 size={22} color={theme.text} />
           </TouchableOpacity>
         </View>
