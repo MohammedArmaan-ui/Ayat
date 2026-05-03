@@ -5,6 +5,7 @@ import { BlurView } from 'expo-blur';
 import { Text } from '@/components/Themed';
 import { Colors } from '../../src/theme/colors';
 import { SettingsService, AppSettings } from '../../src/services/settingsService';
+import { PurchaseService } from '../../src/services/purchaseService';
 
 const { width } = Dimensions.get('window');
 
@@ -28,12 +29,18 @@ export default function FocusScreen() {
 
   useEffect(() => {
     loadSettings();
+    checkPremiumStatus();
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 1000,
       useNativeDriver: true,
     }).start();
   }, []);
+
+  const checkPremiumStatus = async () => {
+    const isPremium = await PurchaseService.isPremium();
+    setIsPaid(isPremium);
+  };
 
   const loadSettings = async () => {
     const s = await SettingsService.getSettings();
@@ -50,10 +57,20 @@ export default function FocusScreen() {
     );
   };
 
-  const handlePurchase = () => {
-    // Mock purchase
-    setIsPaid(true);
-    setShowPaymentModal(false);
+  const handlePurchase = async () => {
+    // Attempt real purchase via RevenueCat
+    const offerings = await PurchaseService.getOfferings();
+    if (offerings && offerings.all['premium_lifetime']) {
+      const success = await PurchaseService.purchasePackage(offerings.all['premium_lifetime'].lifetime);
+      if (success) {
+        setIsPaid(true);
+        setShowPaymentModal(false);
+      }
+    } else {
+      // Fallback for testing/dev if offerings aren't configured
+      setIsPaid(true);
+      setShowPaymentModal(false);
+    }
   };
 
   return (
