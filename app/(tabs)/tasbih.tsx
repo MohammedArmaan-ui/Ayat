@@ -140,7 +140,7 @@ export default function TasbihScreen() {
         <Text style={[styles.hintText, { color: theme.textSecondary }]}>Tap anywhere in the circle to count</Text>
       </View>
 
-      <View style={[styles.footer, { borderTopColor: theme.border }]}>
+      <View style={styles.footer}>
         <TouchableOpacity style={styles.footerAction} onPress={() => setIsHistoryModalVisible(true)}>
           <List size={24} color={theme.primary} />
           <Text style={[styles.footerText, { color: theme.primary }]}>History</Text>
@@ -341,7 +341,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     padding: 24,
-    borderTopWidth: 1,
   },
   footerAction: {
     alignItems: 'center',
