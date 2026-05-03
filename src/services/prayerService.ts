@@ -1,25 +1,40 @@
 import { db } from '../database/db';
 
-export interface PrayerTimings {
-  Fajr: string;
-  Sunrise: string;
-  Dhuhr: string;
-  Asr: string;
-  Maghrib: string;
-  Isha: string;
-  Imsak: string;
-  Midnight: string;
+export interface HijriDate {
+  date: string;
+  day: string;
+  month: {
+    number: number;
+    en: string;
+    ar: string;
+  };
+  year: string;
+}
+
+export interface PrayerData {
+  timings: {
+    Fajr: string;
+    Sunrise: string;
+    Dhuhr: string;
+    Asr: string;
+    Maghrib: string;
+    Isha: string;
+  };
+  hijri: HijriDate;
 }
 
 export const PrayerService = {
-  getPrayerTimes: async (city: string = 'London', country: string = 'UK'): Promise<PrayerTimings | null> => {
+  getPrayerTimes: async (city: string = 'London', country: string = 'UK'): Promise<PrayerData | null> => {
     const finalCity = city || 'London';
     const finalCountry = country || 'UK';
     try {
       const response = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=${encodeURIComponent(finalCity)}&country=${encodeURIComponent(finalCountry)}&method=2`);
       const json = await response.json();
       if (json.code === 200) {
-        return json.data.timings;
+        return {
+          timings: json.data.timings,
+          hijri: json.data.date.hijri
+        };
       }
     } catch (e) {
       console.error('Failed to fetch prayer times:', e);
@@ -27,14 +42,17 @@ export const PrayerService = {
     return null;
   },
 
-  getPrayerTimesByDate: async (dateString: string, city: string = 'London', country: string = 'UK'): Promise<PrayerTimings | null> => {
+  getPrayerTimesByDate: async (dateString: string, city: string = 'London', country: string = 'UK'): Promise<PrayerData | null> => {
     const finalCity = city || 'London';
     const finalCountry = country || 'UK';
     try {
       const response = await fetch(`https://api.aladhan.com/v1/timingsByCity/${dateString}?city=${encodeURIComponent(finalCity)}&country=${encodeURIComponent(finalCountry)}&method=2`);
       const json = await response.json();
       if (json.code === 200) {
-        return json.data.timings;
+        return {
+          timings: json.data.timings,
+          hijri: json.data.date.hijri
+        };
       }
     } catch (e) {
       console.error('Failed to fetch prayer times for date:', e);

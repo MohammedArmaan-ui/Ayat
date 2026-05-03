@@ -1,253 +1,209 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { StyleSheet, FlatList, View, TouchableOpacity, useColorScheme, ActivityIndicator, Alert, Image } from 'react-native';
-import { Stack, useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { Search, Settings, ChevronDown } from 'lucide-react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme, Image, Dimensions, Animated } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { Clock, BookOpen, Calculator, RefreshCw, Book, ChevronRight, Heart, Bell, Settings } from 'lucide-react-native';
+import { BlurView } from 'expo-blur';
 
 import { Text } from '@/components/Themed';
-import { AyahCard } from '../../src/components/AyahCard';
-import { AudioController } from '../../src/components/AudioController';
-import { ReflectionModal } from '../../src/components/ReflectionModal';
-import { QuranService } from '../../src/services/quranService';
-import { audioService } from '../../src/services/audioService';
-import { SettingsService, AppSettings } from '../../src/services/settingsService';
-import { Surah, Ayah } from '../../src/models/types';
 import { Colors } from '../../src/theme/colors';
+import { SettingsService, AppSettings } from '../../src/services/settingsService';
+import { PrayerService, PrayerData } from '../../src/services/prayerService';
+import { AuthService } from '../../src/services/authService';
+import { DUAS } from '../../src/constants/duasData';
+import { SURAH_DATA } from '../../src/constants/surahData';
+import { STORIES } from '../../src/constants/storiesData';
 
-export default function ReaderScreen() {
-  const { surahId } = useLocalSearchParams();
-  const [currentSurah, setCurrentSurah] = useState<Surah | null>(null);
-  const [ayahs, setAyahs] = useState<Ayah[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeAyah, setActiveAyah] = useState<Ayah | null>(null);
-  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
-  const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set());
-  const [reflectionVisible, setReflectionVisible] = useState(false);
-  const [reflectionAyah, setReflectionAyah] = useState<Ayah | null>(null);
-  const [loopingAyahId, setLoopingAyahId] = useState<number | null>(null);
+const { width } = Dimensions.get('window');
+
+export default function HomeScreen() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
+  const [timings, setTimings] = useState<PrayerTimings | null>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [hijriDate, setHijriDate] = useState<any>(null);
+  const [dailyDua, setDailyDua] = useState(DUAS[0]);
+  const [dailyStory, setDailyStory] = useState(STORIES[0]);
+  const [fadeAnim] = useState(new Animated.Value(0));
   
   const systemColorScheme = useColorScheme() ?? 'light';
   const theme = settings ? (Colors as any)[settings.theme] : (Colors as any)[systemColorScheme];
   const router = useRouter();
 
+  const [userName, setUserName] = useState('Servant of Allah');
+
   useFocusEffect(
     useCallback(() => {
-      loadSettings();
+      loadData();
     }, [])
   );
 
-  const loadSettings = async () => {
-    const s = await SettingsService.getSettings();
-    setSettings(s);
-  };
-
   useEffect(() => {
-    loadData();
-  }, [surahId]);
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true,
+    }).start();
+
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   const loadData = async () => {
-    setLoading(true);
-    try {
-      const s = await SettingsService.getSettings();
-      setSettings(s);
-
-
-      const surahs = await QuranService.getSurahs();
-      if (surahs.length > 0) {
-        const id = surahId ? parseInt(surahId as string) : 1;
-        const selectedSurah = surahs.find(s => s.id === id) || surahs[0];
-        setCurrentSurah(selectedSurah);
-        const ayahData = await QuranService.getAyahsBySurah(selectedSurah.id);
-        setAyahs(ayahData);
-
-        // Load bookmarks
-        const bookmarks = await Promise.all(ayahData.map(a => QuranService.isBookmarked(a.id)));
-        const bookmarkedSet = new Set<number>();
-        ayahData.forEach((a, i) => {
-          if (bookmarks[i]) bookmarkedSet.add(a.id);
-        });
-        setBookmarkedIds(bookmarkedSet);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePlayAyah = async (ayah: Ayah) => {
-    setActiveAyah(ayah);
-    setIsAudioPlaying(true);
-    await audioService.playAyah(ayah.surah_id, ayah.ayah_number, settings?.selectedSpeaker);
-  };
-
-  const handleBookmark = async (ayahId: number) => {
-    const isNowBookmarked = await QuranService.toggleBookmark(ayahId);
-    setBookmarkedIds(prev => {
-      const next = new Set(prev);
-      if (isNowBookmarked) next.add(ayahId);
-      else next.delete(ayahId);
-      return next;
-    });
-  };
-
-  const handleSaveReflection = async (note: string) => {
-    if (reflectionAyah) {
-      await QuranService.saveReflection(reflectionAyah.id, note);
-      Alert.alert('Success', 'Reflection saved successfully!');
-    }
-  };
-
-  const handleLoop = (ayahId: number) => {
-    if (loopingAyahId === ayahId) {
-      setLoopingAyahId(null);
-      audioService.setLooping(false);
-    } else {
-      setLoopingAyahId(ayahId);
-      audioService.setLooping(true);
-      // If this ayah is already playing, it will start looping
-      // If not, it will loop when played
-    }
-  };
-
-  const handlePlayPause = async () => {
-    if (isAudioPlaying) {
-      await audioService.pause();
-    } else {
-      await audioService.resume();
-    }
-    setIsAudioPlaying(!isAudioPlaying);
-  };
-
-  const handleSkip = async (direction: 'next' | 'prev') => {
-    if (!activeAyah || !currentSurah) return;
-    const currentIndex = ayahs.findIndex(a => a.id === activeAyah.id);
-    let nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+    const s = await SettingsService.getSettings();
+    setSettings(s);
     
-    if (nextIndex >= 0 && nextIndex < ayahs.length) {
-      handlePlayAyah(ayahs[nextIndex]);
-    } else if (direction === 'next') {
-      // Last ayah of current surah, go to next surah
-      const nextSurahId = currentSurah.id < 114 ? currentSurah.id + 1 : 1;
-      router.setParams({ surahId: nextSurahId.toString() });
-      // We'll need to auto-play the first ayah of the new surah once loaded
-      // This is handled by a separate effect
+    if (s.userName) {
+      setUserName(s.userName.split(' ')[0]);
     }
+
+    const date = new Date();
+    const dateString = `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getFullYear()}`;
+    const data = await PrayerService.getPrayerTimesByDate(dateString, s.locationCity, s.locationCountry);
+    if (data) {
+      setTimings(data);
+      setHijriDate(data.hijri);
+    }
+
+    // Pick a random dua and story for the day (using date as seed)
+    const dayOfYear = Math.floor((date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / 86400000);
+    setDailyDua(DUAS[dayOfYear % DUAS.length]);
+    setDailyStory(STORIES[dayOfYear % STORIES.length]);
   };
 
-  useEffect(() => {
-    audioService.setOnFinishedListener(() => {
-      handleSkip('next');
-    });
-    return () => audioService.setOnFinishedListener(null);
-  }, [activeAyah, ayahs, currentSurah]);
+  const getNextPrayer = () => {
+    if (!timings) return { name: '--', time: '--:--' };
+    const now = currentTime;
+    const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
+    const prayers = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
-  // Effect to handle auto-play when switching surahs via auto-play
-  useEffect(() => {
-    if (isAudioPlaying && ayahs.length > 0 && activeAyah?.surah_id !== currentSurah?.id) {
-      handlePlayAyah(ayahs[0]);
+    for (const p of prayers) {
+      const [h, m] = (timings.timings as any)[p].split(':').map(Number);
+      if (h * 60 + m > currentTotalMinutes) {
+        return { name: p, time: formatTime((timings.timings as any)[p]) };
+      }
     }
-  }, [ayahs]);
+    return { name: 'Fajr', time: formatTime(timings.timings.Fajr) };
+  };
 
-  if (loading) {
-    return (
-      <View style={[styles.centered, { backgroundColor: theme.background }]}>
-        <ActivityIndicator size="large" color={theme.primary} />
+  const formatTime = (time: string) => {
+    if (!time || !settings) return '--:--';
+    if (settings.timeFormat === '24h') return time;
+    const [hours, minutes] = time.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    return `${hours % 12 || 12}:${minutes.toString().padStart(2, '0')} ${period}`;
+  };
+
+  const QuickLink = ({ icon: Icon, title, route }: any) => (
+    <TouchableOpacity 
+      style={[styles.quickLink, { backgroundColor: theme.surface }]}
+      onPress={() => router.push(route)}
+    >
+      <View style={[styles.linkIcon, { backgroundColor: theme.primary + '10' }]}>
+        <Icon size={24} color={theme.primary} />
       </View>
-    );
-  }
+      <Text style={[styles.linkTitle, { color: theme.text }]}>{title}</Text>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <Stack.Screen
-        options={{
-          headerTitle: () => (
-            <TouchableOpacity style={styles.headerTitle} onPress={() => router.push('/surahs')}>
-              <Image 
-                source={require('../../assets/images/icon.png')} 
-                style={styles.logo}
-                resizeMode="contain"
-              />
-              <Text style={[styles.surahName, { color: theme.primary }]}>
-                {currentSurah?.name_transliteration || 'Loading...'}
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
+          <View>
+            <Text style={[styles.greeting, { color: theme.text }]}>As-salamu alaykum,</Text>
+            <Text style={[styles.userName, { color: theme.primary }]}>{userName}</Text>
+            {hijriDate && (
+              <Text style={[styles.hijriDate, { color: theme.textSecondary }]}>
+                {hijriDate.day} {hijriDate.month.en} {hijriDate.year} AH
               </Text>
-              <ChevronDown size={16} color={theme.primary} />
-            </TouchableOpacity>
-          ),
-          headerRight: () => (
-            <View style={styles.headerActions}>
-              <TouchableOpacity onPress={() => router.push('/search')} style={styles.headerButton}>
-                <Search size={24} color={theme.primary} />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push('/(tabs)/settings')} style={styles.headerButton}>
-                <Settings size={24} color={theme.primary} />
-              </TouchableOpacity>
-            </View>
-          ),
-          headerStyle: { backgroundColor: theme.background },
-          headerShadowVisible: false,
-        }}
-      />
+            )}
+          </View>
+          <TouchableOpacity style={[styles.profileButton, { backgroundColor: theme.surface }]}>
+            <Bell size={24} color={theme.text} />
+          </TouchableOpacity>
+        </Animated.View>
 
-      <FlatList
-        data={ayahs}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <AyahCard 
-            ayah={item} 
-            isDark={settings?.theme === 'dark' || (settings?.theme === undefined && systemColorScheme === 'dark')}
-            isBookmarked={bookmarkedIds.has(item.id)}
-            isLooping={loopingAyahId === item.id}
-            fontSize={settings?.fontSize}
-            showTranslationEnabled={settings?.translationEnabled}
-            transliterationEnabled={settings?.transliterationEnabled}
-            wordByWordEnabled={settings?.wordByWordEnabled}
-            onPlay={() => handlePlayAyah(item)}
-            onBookmark={() => handleBookmark(item.id)}
-            onReflect={() => {
-              setReflectionAyah(item);
-              setReflectionVisible(true);
-            }}
-            onLoop={() => handleLoop(item.id)}
-          />
+        {/* Prayer Highlights */}
+        <TouchableOpacity 
+          style={[styles.prayerCard, { backgroundColor: theme.primary }]}
+          onPress={() => router.push('/(tabs)/prayer')}
+        >
+          <View style={styles.prayerInfo}>
+            <Text style={styles.nextPrayerLabel}>Next Prayer</Text>
+            <Text style={styles.nextPrayerName}>{getNextPrayer().name}</Text>
+            <Text style={styles.nextPrayerTime}>{getNextPrayer().time}</Text>
+          </View>
+          <View style={styles.prayerGraphic}>
+             <Clock size={80} color="rgba(255,255,255,0.2)" />
+          </View>
+        </TouchableOpacity>
+
+        {/* Continue Reading Card */}
+        {settings?.lastReadSurah && (
+          <TouchableOpacity 
+            style={[styles.continueCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
+            onPress={() => router.push({ pathname: '/(tabs)/reader', params: { surahId: settings.lastReadSurah } })}
+          >
+            <View style={[styles.linkIcon, { backgroundColor: theme.accent + '15' }]}>
+              <BookOpen size={24} color={theme.accent} />
+            </View>
+            <View style={styles.continueContent}>
+              <Text style={[styles.continueLabel, { color: theme.textSecondary }]}>Continue Reading</Text>
+              <Text style={[styles.continueSurah, { color: theme.text }]}>
+                Surah {SURAH_DATA.find(s => s.number === settings.lastReadSurah)?.transliteration || 'Quran'}
+              </Text>
+            </View>
+            <ChevronRight size={20} color={theme.border} />
+          </TouchableOpacity>
         )}
-        contentContainerStyle={[styles.listContent, isAudioPlaying && { paddingBottom: 100 }]}
-        ListHeaderComponent={
-          currentSurah ? (
-            <View style={styles.surahHeader}>
-              <Text style={[styles.bismillah, { color: theme.primary }]}>
-                بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-              </Text>
-              <View style={[styles.infoRow, { borderBottomColor: theme.border }]}>
-                <Text style={{ color: theme.textSecondary }}>{currentSurah.revelation_type}</Text>
-                <Text style={{ color: theme.textSecondary }}>{currentSurah.total_ayahs} Ayahs</Text>
-              </View>
+
+        {/* Daily Dua Section */}
+        <View style={[styles.section, { marginTop: 24 }]}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Dua of the Day</Text>
+          <View style={[styles.duaCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <Text style={[styles.duaArabic, { color: theme.primary }]}>{dailyDua.arabic}</Text>
+            <Text style={[styles.duaTranslation, { color: theme.textSecondary }]}>{dailyDua.translation}</Text>
+            <View style={styles.duaFooter}>
+              <Text style={[styles.duaRef, { color: theme.primary }]}>{dailyDua.reference}</Text>
+              <TouchableOpacity>
+                <Heart size={20} color={theme.primary} />
+              </TouchableOpacity>
             </View>
-          ) : null
-        }
-      />
+          </View>
+        </View>
 
-      <ReflectionModal
-        visible={reflectionVisible}
-        ayahReference={`${currentSurah?.name_transliteration} ${reflectionAyah?.ayah_number}`}
-        onClose={() => setReflectionVisible(false)}
-        onSave={handleSaveReflection}
-      />
+        {/* Quick Access */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Quick Access</Text>
+          <View style={styles.quickLinksGrid}>
+            <QuickLink icon={BookOpen} title="Reader" route="/(tabs)/reader" />
+            <QuickLink icon={RefreshCw} title="Tasbih" route="/(tabs)/tasbih" />
+            <QuickLink icon={Calculator} title="Zakat" route="/(tabs)/zakat" />
+            <QuickLink icon={Book} title="Stories" route="/(tabs)/stories" />
+            <QuickLink icon={Settings} title="Settings" route="/(tabs)/settings" />
+          </View>
+        </View>
 
-      {activeAyah && (
-        <AudioController 
-          currentAyah={`${currentSurah?.name_transliteration} ${activeAyah.ayah_number}`}
-          isPlaying={isAudioPlaying}
-          onPlayPause={handlePlayPause}
-          onSkipBack={() => handleSkip('prev')}
-          onSkipForward={() => handleSkip('next')}
-          onClose={() => {
-            setIsAudioPlaying(false);
-            setActiveAyah(null);
-            audioService.stop();
-          }}
-        />
-      )}
+        {/* Featured Story */}
+        <TouchableOpacity 
+          style={[styles.featuredCard, { backgroundColor: theme.surface }]}
+          onPress={() => router.push(`/story/${dailyStory.id}` as any)}
+        >
+          <Image 
+            source={{ uri: `https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=800&q=80&sig=${dailyStory.id}` }} 
+            style={styles.featuredImage}
+          />
+          <View style={styles.featuredOverlay}>
+            <View style={[styles.categoryBadge, { backgroundColor: theme.primary + '30' }]}>
+              <Text style={[styles.categoryText, { color: '#FFF' }]}>Daily Story</Text>
+            </View>
+            <Text style={styles.featuredTitle}>{dailyStory.title}</Text>
+            <View style={styles.featuredMeta}>
+              <ChevronRight size={18} color="#FFF" />
+            </View>
+          </View>
+        </TouchableOpacity>
+
+      </ScrollView>
     </View>
   );
 }
@@ -256,50 +212,210 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  centered: {
-    flex: 1,
+  scrollContent: {
+    padding: 24,
+    paddingTop: 60,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  greeting: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  userName: {
+    fontSize: 28,
+    fontWeight: 'bold',
+  },
+  hijriDate: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  profileButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  headerTitle: {
+  prayerCard: {
+    borderRadius: 24,
+    padding: 24,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 15,
+    elevation: 8,
+  },
+  continueCard: {
+    marginTop: 16,
     flexDirection: 'row',
     alignItems: 'center',
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1,
   },
-  logo: {
-    width: 32,
-    height: 32,
-    marginRight: 10,
-    borderRadius: 8,
+  continueContent: {
+    flex: 1,
+    marginLeft: 12,
   },
-  surahName: {
+  continueLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  continueSurah: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginRight: 4,
   },
-  headerActions: {
-    flexDirection: 'row',
+  prayerInfo: {
+    flex: 1,
   },
-  headerButton: {
-    marginLeft: 16,
+  nextPrayerLabel: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 14,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
-  listContent: {
-    paddingBottom: 24,
+  nextPrayerName: {
+    color: '#FFF',
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginVertical: 4,
   },
-  surahHeader: {
-    alignItems: 'center',
-    paddingVertical: 20,
+  nextPrayerTime: {
+    color: '#FFF',
+    fontSize: 18,
+    opacity: 0.9,
   },
-  bismillah: {
-    fontSize: 28,
-    fontFamily: 'System',
+  prayerGraphic: {
+    opacity: 0.5,
+  },
+  section: {
+    marginTop: 32,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
     marginBottom: 16,
   },
-  infoRow: {
+  duaCard: {
+    padding: 20,
+    borderRadius: 20,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  duaArabic: {
+    fontSize: 22,
+    textAlign: 'center',
+    lineHeight: 38,
+    marginBottom: 16,
+    fontFamily: 'System',
+  },
+  duaTranslation: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 22,
+    fontStyle: 'italic',
+  },
+  duaFooter: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+  duaRef: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  quickLinksGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  quickLink: {
+    width: (width - 48 - 24) / 3,
+    aspectRatio: 1,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 1,
+  },
+  linkIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  linkTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  featuredCard: {
+    marginTop: 32,
+    borderRadius: 24,
+    height: 200,
+    overflow: 'hidden',
+    position: 'relative',
+    marginBottom: 40,
+  },
+  featuredImage: {
     width: '100%',
-    paddingBottom: 12,
-    borderBottomWidth: 1,
+    height: '100%',
+  },
+  featuredOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end',
+  },
+  blur: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  featuredContent: {
+    padding: 20,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  featuredTag: {
+    color: '#10B981',
+    fontSize: 10,
+    fontWeight: '900',
+    marginBottom: 4,
+  },
+  featuredTitle: {
+    color: '#FFF',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  featuredSubtitle: {
+    color: '#F3F4F6',
+    fontSize: 12,
+    opacity: 0.8,
   },
 });
-

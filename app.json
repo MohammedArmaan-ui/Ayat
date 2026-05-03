@@ -20,13 +20,16 @@
       }
     },
     "android": {
+      "package": "com.mohammedarmaan.ayat",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#064E3B"
       },
       "permissions": [
         "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION"
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.PACKAGE_USAGE_STATS",
+        "android.permission.SYSTEM_ALERT_WINDOW"
       ],
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false

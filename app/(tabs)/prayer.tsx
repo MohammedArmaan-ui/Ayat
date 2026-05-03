@@ -6,10 +6,10 @@ import { Clock, MapPin, ChevronRight, CheckCircle2, Circle } from 'lucide-react-
 import { Text } from '@/components/Themed';
 import { Colors } from '../../src/theme/colors';
 import { SettingsService, AppSettings } from '../../src/services/settingsService';
-import { PrayerService, PrayerTimings } from '../../src/services/prayerService';
+import { PrayerService, PrayerData } from '../../src/services/prayerService';
 
 export default function PrayerScreen() {
-  const [timings, setTimings] = useState<PrayerTimings | null>(null);
+  const [timings, setTimings] = useState<PrayerData | null>(null);
   const [trackedPrayers, setTrackedPrayers] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -94,7 +94,7 @@ export default function PrayerScreen() {
 
     for (const p of prayers) {
       if (p === 'Sunrise') continue;
-      const [h, m] = (timings as any)[p].split(':').map(Number);
+      const [h, m] = (timings.timings as any)[p].split(':').map(Number);
       const prayerTotalMinutes = h * 60 + m;
       
       if (prayerTotalMinutes > currentTotalMinutes) {
@@ -102,18 +102,18 @@ export default function PrayerScreen() {
         const diffH = Math.floor(diff / 60);
         const diffM = diff % 60;
         const countdown = `Starts in ${diffH > 0 ? `${diffH}h ` : ''}${diffM}m`;
-        return { name: p, time: formatTime((timings as any)[p]), countdown };
+        return { name: p, time: formatTime((timings.timings as any)[p]), countdown };
       }
     }
     
-    const [fh, fm] = timings.Fajr.split(':').map(Number);
+    const [fh, fm] = timings.timings.Fajr.split(':').map(Number);
     const fajrTotalMinutes = fh * 60 + fm;
     const diff = (24 * 60 - currentTotalMinutes) + fajrTotalMinutes;
     const diffH = Math.floor(diff / 60);
     const diffM = diff % 60;
     const countdown = `Starts in ${diffH > 0 ? `${diffH}h ` : ''}${diffM}m`;
     
-    return { name: 'Fajr', time: formatTime(timings.Fajr), countdown };
+    return { name: 'Fajr', time: formatTime(timings.timings.Fajr), countdown };
   };
 
   const formatTime = (time: string) => {
@@ -140,7 +140,7 @@ export default function PrayerScreen() {
     if (targetDate.getTime() > today.getTime()) return false;
 
     const currentTotalMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
-    const timeStr = (timings as any)[prayerName];
+    const timeStr = (timings.timings as any)[prayerName];
     if (!timeStr) return false;
     
     const [h, m] = timeStr.split(':').map(Number);
@@ -166,6 +166,11 @@ export default function PrayerScreen() {
         <Text style={[styles.dateText, { color: theme.text }]}>
           {selectedDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
         </Text>
+        {timings?.hijri && (
+          <Text style={[styles.hijriText, { color: theme.primary }]}>
+            {timings.hijri.day} {timings.hijri.month.en} {timings.hijri.year} AH
+          </Text>
+        )}
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateScroll} contentContainerStyle={styles.dateScrollContent}>
@@ -235,7 +240,7 @@ export default function PrayerScreen() {
               </View>
               <View style={styles.timeInfo}>
                 <Text style={[styles.prayerTime, { color: theme.primary, marginRight: prayer === 'Sunrise' ? 0 : 16 }]}>
-                  {timings ? formatTime((timings as any)[prayer]) : '--:--'}
+                  {timings ? formatTime((timings.timings as any)[prayer]) : '--:--'}
                 </Text>
                 {prayer !== 'Sunrise' && (
                   trackedPrayers[prayer] ? (
@@ -288,6 +293,11 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  hijriText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 2,
   },
   dateScroll: {
     maxHeight: 50,

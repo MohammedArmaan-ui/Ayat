@@ -16,6 +16,8 @@ export interface AppSettings {
   locationCountry: string;
   timeFormat: '12h' | '24h';
   isAuthenticated: boolean;
+  userName: string;
+  lastReadSurah?: number;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -31,6 +33,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   locationCountry: 'UK',
   timeFormat: '12h',
   isAuthenticated: false,
+  userName: 'Servant of Allah',
 };
 
 export const SettingsService = {

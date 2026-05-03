@@ -52,7 +52,7 @@ export default function SurahListScreen() {
             style={[styles.item, { borderBottomColor: theme.border }]}
             onPress={() => {
               router.replace({
-                pathname: '/(tabs)',
+                pathname: '/(tabs)/reader',
                 params: { surahId: item.id }
               });
             }}

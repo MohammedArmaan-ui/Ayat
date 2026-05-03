@@ -37,7 +37,7 @@ export const PurchaseService = {
   getOfferings: async () => {
     try {
       const offerings = await Purchases.getOfferings();
-      return offerings.current;
+      return offerings;
     } catch (e) {
       console.error('[PurchaseService] getOfferings error:', e);
       return null;

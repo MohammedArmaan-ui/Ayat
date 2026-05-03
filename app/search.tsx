@@ -92,7 +92,7 @@ export default function SearchScreen() {
                 style={[styles.surahItem, { borderBottomColor: theme.border }]}
                 onPress={() => {
                   router.replace({
-                    pathname: '/(tabs)',
+                    pathname: '/(tabs)/reader',
                     params: { surahId: item.id }
                   });
                 }}
@@ -112,7 +112,7 @@ export default function SearchScreen() {
               isDark={colorScheme === 'dark'}
               onPlay={() => {
                 router.replace({
-                  pathname: '/(tabs)',
+                  pathname: '/(tabs)/reader',
                   params: { surahId: item.surah_id }
                 });
               }}

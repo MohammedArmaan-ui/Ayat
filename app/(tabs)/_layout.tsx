@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { BookOpen, Bookmark, Settings, Clock, RefreshCw, Book, Shield } from 'lucide-react-native';
+import { Home, BookOpen, Clock, Book, LayoutGrid, Settings } from 'lucide-react-native';
 import { useColorScheme } from 'react-native';
 
 import { Colors } from '../../src/theme/colors';
@@ -29,6 +29,8 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: theme.background,
           borderTopColor: theme.border,
+          height: 60,
+          paddingBottom: 8,
         },
         headerStyle: {
           backgroundColor: theme.background,
@@ -41,7 +43,16 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
+          title: 'Home',
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="reader"
+        options={{
           title: 'Reader',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => <BookOpen size={size} color={color} />,
         }}
       />
@@ -49,46 +60,52 @@ export default function TabLayout() {
         name="prayer"
         options={{
           title: 'Prayer',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => <Clock size={size} color={color} />,
-        }}
-      />
-
-      <Tabs.Screen
-        name="tasbih"
-        options={{
-          title: 'Tasbih',
-          tabBarIcon: ({ color, size }) => <RefreshCw size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="stories"
         options={{
           title: 'Stories',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => <Book size={size} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="focus"
+        name="tools"
         options={{
-          title: 'Focus',
-          tabBarIcon: ({ color, size }) => <Shield size={size} color={color} />,
+          title: 'Tools',
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => <LayoutGrid size={size} color={color} />,
+        }}
+      />
+      
+      {/* Hide these from tab bar but keep them in the router */}
+      <Tabs.Screen
+        name="tasbih"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="zakat"
+        options={{
+          href: null,
         }}
       />
       <Tabs.Screen
         name="bookmarks"
         options={{
-          title: 'Bookmarks',
-          tabBarIcon: ({ color, size }) => <Bookmark size={size} color={color} />,
+          href: null,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Settings',
-          tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
+          href: null,
         }}
       />
     </Tabs>
   );
 }
-

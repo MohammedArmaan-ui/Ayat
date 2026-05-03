@@ -31,6 +31,7 @@ export const AuthService = {
       );
 
       await SettingsService.updateSetting('isAuthenticated', true);
+      await SettingsService.updateSetting('userName', name);
       
       return { success: true };
     } catch (error) {
@@ -45,7 +46,7 @@ export const AuthService = {
         return { success: false, message: 'Email and password are required.' };
       }
 
-      const user = await db.getFirstAsync<{ id: number, password: string }>('SELECT id, password FROM users WHERE email = ?', [email]);
+      const user = await db.getFirstAsync<{ id: number, name: string, password: string }>('SELECT id, name, password FROM users WHERE email = ?', [email]);
       
       if (!user) {
         return { success: false, message: 'No account found with this email.' };
@@ -56,6 +57,9 @@ export const AuthService = {
       }
 
       await SettingsService.updateSetting('isAuthenticated', true);
+      if (user.name) {
+        await SettingsService.updateSetting('userName', user.name);
+      }
       return { success: true };
     } catch (error) {
       console.error('Login error:', error);
