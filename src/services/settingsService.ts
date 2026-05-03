@@ -18,6 +18,8 @@ export interface AppSettings {
   isAuthenticated: boolean;
   userName: string;
   lastReadSurah?: number;
+  currency: string;
+  notificationsEnabled: boolean;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -34,6 +36,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   timeFormat: '12h',
   isAuthenticated: false,
   userName: 'Servant of Allah',
+  currency: 'USD',
+  notificationsEnabled: true,
 };
 
 export const SettingsService = {

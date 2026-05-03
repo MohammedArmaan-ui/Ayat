@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, ScrollView, TouchableOpacity, View, useColorScheme, Switch, TextInput } from 'react-native';
-import { Moon, Sun, Type, Globe, Info, Volume2, BookOpen, MapPin, Clock, LogOut } from 'lucide-react-native';
+import { Moon, Sun, Type, Globe, Info, Volume2, BookOpen, MapPin, Clock, LogOut, Bell } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
 import { Text } from '@/components/Themed';
 import { Colors } from '../../src/theme/colors';
 import { SettingsService, AppSettings, AppTheme } from '../../src/services/settingsService';
+import { NotificationService } from '../../src/services/notificationService';
 
 export default function SettingsScreen() {
   const systemColorScheme = useColorScheme();
@@ -24,6 +25,10 @@ export default function SettingsScreen() {
   const updateSetting = async (key: keyof AppSettings, value: any) => {
     await SettingsService.updateSetting(key, value);
     setSettings(prev => prev ? { ...prev, [key]: value } : null);
+    
+    if (key === 'notificationsEnabled') {
+      await NotificationService.schedulePrayerNotifications();
+    }
   };
 
   const handleLogout = async () => {
@@ -118,6 +123,22 @@ export default function SettingsScreen() {
           <Switch 
             value={settings.wordByWordEnabled} 
             onValueChange={(v) => updateSetting('wordByWordEnabled', v)}
+            trackColor={{ false: theme.border, true: theme.primary }}
+          />
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: theme.primary }]}>Notifications</Text>
+        
+        <View style={[styles.settingRow, { borderBottomColor: theme.border }]}>
+          <View style={styles.settingInfo}>
+            <Bell size={20} color={theme.text} />
+            <Text style={[styles.settingLabel, { color: theme.text }]}>Prayer Reminders</Text>
+          </View>
+          <Switch 
+            value={settings.notificationsEnabled} 
+            onValueChange={(v) => updateSetting('notificationsEnabled', v)}
             trackColor={{ false: theme.border, true: theme.primary }}
           />
         </View>

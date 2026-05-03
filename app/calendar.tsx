@@ -74,10 +74,10 @@ export default function CalendarScreen() {
               ) : (
                 <>
                   <Text style={[styles.hijriMonth, { color: theme.text }]}>
-                    {currentHijri?.month.en} {currentHijri?.year}
+                    {currentHijri?.month.en} {currentHijri?.year} AH
                   </Text>
-                  <Text style={[styles.gregorianMonth, { color: theme.textSecondary }]}>
-                    {currentHijri?.month.ar}
+                  <Text style={[styles.gregorianMonth, { color: theme.primary, fontWeight: '600' }]}>
+                    {viewDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
                   </Text>
                 </>
               )}

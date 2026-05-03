@@ -13,6 +13,7 @@ export default function ZakatScreen() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [savings, setSavings] = useState('');
   const [result, setResult] = useState<any>(null);
+  const [currency, setCurrency] = useState('USD');
   const [fadeAnim] = useState(new Animated.Value(0));
 
   const systemColorScheme = useColorScheme() ?? 'light';
@@ -30,6 +31,25 @@ export default function ZakatScreen() {
   const loadSettings = async () => {
     const s = await SettingsService.getSettings();
     setSettings(s);
+    if (s.currency) setCurrency(s.currency);
+  };
+
+  const currencySymbols: Record<string, string> = {
+    USD: '$',
+    GBP: '£',
+    EUR: '€',
+    INR: '₹',
+    SAR: 'SR',
+    AED: 'DH',
+    PKR: 'Rs',
+    BDT: '৳',
+  };
+
+  const getSymbol = () => currencySymbols[currency] || '$';
+
+  const handleCurrencyChange = async (newCurrency: string) => {
+    setCurrency(newCurrency);
+    await SettingsService.updateSetting('currency', newCurrency);
   };
 
   const handleCalculate = () => {
@@ -80,9 +100,26 @@ export default function ZakatScreen() {
         </Animated.View>
 
         <View style={styles.formCard}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Your Savings</Text>
+          <View style={styles.currencyRow}>
+            <Text style={[styles.sectionTitle, { color: theme.text, marginTop: 0 }]}>Your Savings</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.currencyPicker}>
+              {Object.keys(currencySymbols).map((c) => (
+                <TouchableOpacity 
+                  key={c} 
+                  onPress={() => handleCurrencyChange(c)}
+                  style={[
+                    styles.currencyChip, 
+                    { backgroundColor: currency === c ? theme.primary : theme.surface, borderColor: theme.border }
+                  ]}
+                >
+                  <Text style={{ color: currency === c ? '#FFF' : theme.text, fontWeight: 'bold', fontSize: 12 }}>{c}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+
           <InputField 
-            label="1 Year Bank Savings" 
+            label={`1 Year Bank Savings (${getSymbol()})`} 
             value={savings} 
             onChange={(v: string) => setSavings(v)}
             icon={Wallet}
@@ -115,14 +152,14 @@ export default function ZakatScreen() {
 
             <View style={styles.resultRow}>
               <Text style={[styles.resultLabel, { color: theme.textSecondary }]}>Net Wealth</Text>
-              <Text style={[styles.resultValue, { color: theme.text }]}>${result.totalWealth.toLocaleString(undefined, {minimumFractionDigits: 2})}</Text>
+              <Text style={[styles.resultValue, { color: theme.text }]}>{getSymbol()}{result.totalWealth.toLocaleString(undefined, {minimumFractionDigits: 2})}</Text>
             </View>
             
             <View style={[styles.divider, { marginVertical: 12 }]} />
             
             <View style={styles.resultRow}>
               <Text style={[styles.zakatLabel, { color: theme.text }]}>Zakat Due (2.5%)</Text>
-              <Text style={[styles.zakatValue, { color: theme.primary }]}>${result.zakatDue.toLocaleString(undefined, {minimumFractionDigits: 2})}</Text>
+              <Text style={[styles.zakatValue, { color: theme.primary }]}>{getSymbol()}{result.zakatDue.toLocaleString(undefined, {minimumFractionDigits: 2})}</Text>
             </View>
 
             <Text style={[styles.resultNote, { color: theme.textSecondary }]}>
@@ -184,8 +221,22 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    marginTop: 8,
-    marginBottom: 4,
+  },
+  currencyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  currencyPicker: {
+    marginLeft: 12,
+  },
+  currencyChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginRight: 6,
   },
   inputGroup: {
     gap: 8,
