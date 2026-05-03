@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { BookOpen, Bookmark, Settings, Clock, RefreshCw, Book } from 'lucide-react-native';
+import { BookOpen, Bookmark, Settings, Clock, RefreshCw, Book, Shield } from 'lucide-react-native';
 import { useColorScheme } from 'react-native';
 
 import { Colors } from '../../src/theme/colors';
@@ -65,6 +65,13 @@ export default function TabLayout() {
         options={{
           title: 'Stories',
           tabBarIcon: ({ color, size }) => <Book size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="focus"
+        options={{
+          title: 'Focus',
+          tabBarIcon: ({ color, size }) => <Shield size={size} color={color} />,
         }}
       />
       <Tabs.Screen

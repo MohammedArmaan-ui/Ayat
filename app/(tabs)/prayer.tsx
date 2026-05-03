@@ -126,6 +126,29 @@ export default function PrayerScreen() {
     return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
   };
 
+  const canTogglePrayer = (prayerName: string) => {
+    if (prayerName === 'Sunrise') return false;
+    if (!timings) return false;
+
+    const targetDate = new Date(selectedDate);
+    targetDate.setHours(0, 0, 0, 0);
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (targetDate.getTime() < today.getTime()) return true;
+    if (targetDate.getTime() > today.getTime()) return false;
+
+    const currentTotalMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+    const timeStr = (timings as any)[prayerName];
+    if (!timeStr) return false;
+    
+    const [h, m] = timeStr.split(':').map(Number);
+    const prayerTotalMinutes = h * 60 + m;
+    
+    return currentTotalMinutes >= prayerTotalMinutes;
+  };
+
   const isToday = selectedDate.getDate() === new Date().getDate() && selectedDate.getMonth() === new Date().getMonth();
 
   return (
@@ -186,16 +209,25 @@ export default function PrayerScreen() {
         </View>
       ) : (
         <View style={[styles.prayerList, !isToday && { marginTop: 24 }]}>
-          {prayers.map((prayer) => (
+          {prayers.map((prayer) => {
+            const isClickable = canTogglePrayer(prayer);
+            return (
             <TouchableOpacity 
               key={prayer} 
-              activeOpacity={0.8}
+              activeOpacity={isClickable ? 0.8 : 1}
               onPress={() => {
-                if (prayer !== 'Sunrise') {
+                if (isClickable) {
                   handleTogglePrayer(prayer);
                 }
               }}
-              style={[styles.prayerRow, { backgroundColor: theme.surface, borderColor: theme.border }]}
+              style={[
+                styles.prayerRow, 
+                { 
+                  backgroundColor: theme.surface, 
+                  borderColor: theme.border,
+                  opacity: prayer === 'Sunrise' ? 0.7 : 1
+                }
+              ]}
             >
               <View style={styles.prayerInfo}>
                 <Text style={styles.prayerIcon}>{prayerIcons[prayer]}</Text>
@@ -209,12 +241,14 @@ export default function PrayerScreen() {
                   trackedPrayers[prayer] ? (
                     <CheckCircle2 size={24} color={theme.primary} />
                   ) : (
-                    <Circle size={24} color={theme.border} />
+                    <View style={{ opacity: isClickable ? 1 : 0.3 }}>
+                      <Circle size={24} color={theme.border} />
+                    </View>
                   )
                 )}
               </View>
             </TouchableOpacity>
-          ))}
+          )})}
         </View>
       )}
 
