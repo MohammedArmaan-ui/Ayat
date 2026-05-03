@@ -145,5 +145,29 @@ export const STORIES = [
     category: 'Quranic Tales',
     readTime: '7 min',
     content: 'The story of the Companions of the Cave (Ashab al-Kahf) is narrated in Surah Al-Kahf. It is a beautiful story about a group of righteous youth who lived in a city ruled by a tyrannical king who forced his people to worship idols.\n\nRejecting the polytheism of their society, these young men secretly believed in the Oneness of Allah. When their faith was discovered, they faced persecution. To protect their religion, they fled the city and took refuge in a secluded cave, accompanied by their loyal dog.\n\nIn the cave, they prayed to Allah for mercy. Allah answered their prayers by placing them into a deep sleep that lasted for over 300 years. During this time, the world outside changed drastically; the city had embraced monotheism.\n\nWhen they awoke, they thought they had only slept for a day. They sent one of their companions to the city with an old coin to buy food. The shopkeeper, seeing the ancient coin, was astonished, and the secret of the sleepers was revealed to the city.\n\nThe people rejoiced at witnessing this miracle of resurrection. Their story stands as an eternal testament to Allah\'s power to protect those who rely on Him and the reality of life after death.'
+  },
+  {
+    id: 'prophet-ayyub',
+    title: 'The Story of Prophet Ayyub',
+    subtitle: 'An enduring symbol of patience and trust in Allah during extreme affliction.',
+    category: 'Prophets',
+    readTime: '8 min',
+    content: 'Prophet Ayyub (Job) was a wealthy, healthy, and highly respected prophet of Allah, blessed with a large family and vast properties. However, Allah decided to test his faith to serve as an example for all of humanity.\n\nIn a series of rapid misfortunes, Ayyub lost all his wealth, his property was destroyed, and tragically, his children perished. Furthermore, he was struck by a severe and repulsive illness that left him bedridden for years. His friends and community abandoned him, with only his loyal wife staying by his side to care for him.\n\nDespite losing everything, Ayyub never complained. He remained in a state of continuous remembrance and gratitude to Allah. After many long years of intense suffering, Ayyub finally made a beautiful, humble prayer to his Lord: "Indeed, adversity has touched me, and You are the most merciful of the merciful."\n\nAllah answered his prayer, instructing him to strike the ground with his foot. A cool spring gushed forth; he washed in it and drank from it, and was miraculously cured of all his illnesses. Allah not only restored his health but returned his wealth manifold and blessed him with an even larger family. Ayyub’s story teaches us that true patience (Sabr Jameel) and unwavering faith in Allah’s mercy will ultimately lead to incredible rewards.'
+  },
+  {
+    id: 'maryam-mother-of-isa',
+    title: 'Maryam, the Mother of Isa',
+    subtitle: 'A life of absolute purity, devotion, and miraculous grace.',
+    category: 'Quranic Tales',
+    readTime: '10 min',
+    content: 'Maryam (Mary) holds a deeply exalted status in Islam, being the only woman mentioned by name in the Quran. Her mother had dedicated her to the service of Allah even before her birth. Maryam grew up in the sanctuary (Mihrab) under the care of Prophet Zakariya.\n\nShe spent her days in deep prayer and devotion. Zakariya would often find miraculous provisions of out-of-season fruits in her sanctuary. When he asked where she got them, Maryam simply replied, "It is from Allah. Indeed, Allah provides for whom He wills without account."\n\nOne day, the Angel Jibril (Gabriel) appeared to her in the form of a man to give her the glad tidings of a son, Isa (Jesus). Maryam was shocked, as no man had ever touched her, and she was chaste. Jibril told her that it is easy for Allah; He only says "Be," and it is.\n\nMaryam withdrew to a distant place to give birth, enduring the pains of childbirth alone under a date palm tree. In her distress, Allah provided a stream of water beneath her and fresh dates from the tree above. When she returned to her people carrying the infant Isa, they accused her. By the miracle of Allah, the baby Isa spoke from his cradle to defend her purity and announce his prophethood. Maryam\'s absolute trust in Allah made her a timeless symbol of piety and faith.'
+  },
+  {
+    id: 'the-two-gardens',
+    title: 'The Story of the Two Gardens',
+    subtitle: 'A profound parable about wealth, arrogance, and gratitude.',
+    category: 'Quranic Tales',
+    readTime: '7 min',
+    content: 'This powerful parable is found in Surah Al-Kahf. It tells the story of two men. One was exceptionally wealthy, blessed by Allah with two magnificent gardens of grapevines, surrounded by date palms, with a river flowing between them. The gardens yielded abundant fruit without fail.\n\nThe wealthy man, however, grew arrogant. As he walked through his spectacular gardens with his less fortunate companion, he boasted: "I am greater than you in wealth and mightier in men." He foolishly believed his wealth was the result of his own greatness and claimed that his gardens would never perish, even doubting the coming of the Day of Judgment.\n\nHis humble companion admonished him, reminding him that everything he had was a gift from Allah, the One who created him from dust. He advised the wealthy man to say, "Masha\'Allah, la quwwata illa billah" (What Allah willed has occurred; there is no power except in Allah) when entering his garden.\n\nThe arrogant man ignored the warning. Consequently, Allah sent a calamity upon his gardens overnight. The vineyards were destroyed, and the land became barren. The wealthy man was left wringing his hands in regret over what he had spent on it, realizing too late that his wealth could not save him, and that true power and provision lie solely with Allah.'
   }
 ];
