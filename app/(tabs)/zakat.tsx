@@ -43,6 +43,14 @@ export default function ZakatScreen() {
     AED: 'DH',
     PKR: 'Rs',
     BDT: '৳',
+    AUD: 'A$',
+    CAD: 'C$',
+    JPY: '¥',
+    CNY: '¥',
+    MYR: 'RM',
+    IDR: 'Rp',
+    QAR: 'QR',
+    KWD: 'KD',
   };
 
   const getSymbol = () => currencySymbols[currency] || '$';

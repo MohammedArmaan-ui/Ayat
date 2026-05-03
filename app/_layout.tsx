@@ -97,6 +97,7 @@ function RootLayoutNav() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="search" options={{ presentation: 'modal', title: 'Search Ayah' }} />
         <Stack.Screen name="calendar" options={{ title: 'Islamic Calendar' }} />
+        <Stack.Screen name="names-of-allah" options={{ title: '99 Names of Allah' }} />
         <Stack.Screen name="story/[id]" options={{ headerShown: false }} />
       </Stack>
     </ThemeProvider>

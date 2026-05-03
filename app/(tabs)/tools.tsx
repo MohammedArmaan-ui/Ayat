@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme, Animated } from 'react-native';
-import { Calculator, RefreshCw, ChevronRight, Info, Compass, Calendar } from 'lucide-react-native';
+import { Calculator, RefreshCw, ChevronRight, Info, Compass, Calendar, Heart } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
 import { Text } from '@/components/Themed';
@@ -55,6 +55,12 @@ export default function ToolsScreen() {
             title="Islamic Calendar" 
             description="Hijri dates and holy days"
             route="/calendar"
+          />
+          <ToolItem 
+            icon={Heart} 
+            title="99 Names of Allah" 
+            description="Asmā' Allah al-Husnā"
+            route="/names-of-allah"
           />
           <ToolItem 
             icon={Calculator} 

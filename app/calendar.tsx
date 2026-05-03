@@ -15,6 +15,7 @@ export default function CalendarScreen() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentHijri, setCurrentHijri] = useState<any>(null);
+  const [monthData, setMonthData] = useState<any[]>([]);
   const [viewDate, setViewDate] = useState(new Date());
   const router = useRouter();
   const systemColorScheme = useColorScheme() ?? 'light';
@@ -30,8 +31,16 @@ export default function CalendarScreen() {
 
     const dateString = `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getFullYear()}`;
     const data = await PrayerService.getPrayerTimesByDate(dateString, s.locationCity, s.locationCountry);
+    
     if (data) {
       setCurrentHijri(data.hijri);
+      const month = await PrayerService.getHijriMonth(
+        data.hijri.month.number, 
+        parseInt(data.hijri.year), 
+        s.locationCity, 
+        s.locationCountry
+      );
+      setMonthData(month);
     }
     setLoading(false);
   };
@@ -89,11 +98,11 @@ export default function CalendarScreen() {
 
           {/* Hijri Grid */}
           <View style={styles.grid}>
-            {Array.from({ length: 30 }).map((_, i) => {
-              const dayNum = i + 1;
-              const hijriDateStr = `${dayNum.toString().padStart(2, '0')}-${currentHijri?.month.number.toString().padStart(2, '0')}`;
+            {monthData.map((day, i) => {
+              const dayNum = parseInt(day.date.hijri.day);
+              const hijriDateStr = `${dayNum.toString().padStart(2, '0')}-${day.date.hijri.month.number.toString().padStart(2, '0')}`;
               const holiday = ISLAMIC_HOLIDAYS.find(h => h.hijriDate === hijriDateStr);
-              const isToday = currentHijri && parseInt(currentHijri.day) === dayNum;
+              const isToday = new Date().toDateString() === new Date(day.date.gregorian.date.split('-').reverse().join('-')).toDateString();
               
               return (
                 <View 
@@ -111,6 +120,13 @@ export default function CalendarScreen() {
                     isToday && { color: '#FFF', fontWeight: 'bold' }
                   ]}>
                     {dayNum}
+                  </Text>
+                  <Text style={[
+                    styles.gregorianGridDay, 
+                    { color: theme.textSecondary },
+                    isToday && { color: 'rgba(255,255,255,0.8)' }
+                  ]}>
+                    {day.date.gregorian.day}
                   </Text>
                   {holiday && (
                     <View style={[styles.holidayDot, { backgroundColor: theme.primary }]} />
@@ -227,7 +243,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   gridDay: {
-    fontSize: 15,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  gregorianGridDay: {
+    fontSize: 10,
+    marginTop: 2,
   },
   holidayDot: {
     width: 4,

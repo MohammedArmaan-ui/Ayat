@@ -60,6 +60,21 @@ export const PrayerService = {
     return null;
   },
 
+  getHijriMonth: async (month: number, year: number, city: string = 'London', country: string = 'UK'): Promise<any[]> => {
+    const finalCity = city || 'London';
+    const finalCountry = country || 'UK';
+    try {
+      const response = await fetch(`https://api.aladhan.com/v1/hijriCalendarByCity/${year}/${month}?city=${encodeURIComponent(finalCity)}&country=${encodeURIComponent(finalCountry)}&method=2`);
+      const json = await response.json();
+      if (json.code === 200) {
+        return json.data;
+      }
+    } catch (e) {
+      console.error('Failed to fetch Hijri month:', e);
+    }
+    return [];
+  },
+
   getTrackedPrayers: async (date: string): Promise<Record<string, boolean>> => {
     try {
       const rows = await db.getAllAsync<{ prayer_name: string, completed: number }>('SELECT prayer_name, completed FROM prayer_tracking WHERE date = ?', [date]);
