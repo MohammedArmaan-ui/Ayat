@@ -63,6 +63,12 @@ export default function ToolsScreen() {
             route="/names-of-allah"
           />
           <ToolItem 
+            icon={Sun} 
+            title="Daily Adhkar" 
+            description="Morning and evening supplications"
+            route="/adhkar"
+          />
+          <ToolItem 
             icon={Calculator} 
             title="Zakat Calculator" 
             description="Calculate your yearly zakat"
