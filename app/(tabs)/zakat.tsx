@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme, TextInput, Animated, Dimensions, Modal, FlatList } from 'react-native';
-import { Calculator, Wallet, Coins, TrendingUp, Info, ChevronRight, Check, Search, X } from 'lucide-react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme, TextInput, Animated, Dimensions, Modal, FlatList, ActivityIndicator } from 'react-native';
+import { Calculator, Wallet, Info, ChevronRight, Check, Search, X, RefreshCw } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import { Text } from '@/components/Themed';
 import { Colors } from '../../src/theme/colors';
 import { SettingsService, AppSettings } from '../../src/services/settingsService';
 import { ZakatService } from '../../src/services/zakatService';
-import { CURRENCIES, Currency } from '../../src/constants/currenciesData';
+import { CurrencyService } from '../../src/services/currencyService';
+import { CURRENCIES } from '../../src/constants/currenciesData';
 
 const { width } = Dimensions.get('window');
 
@@ -15,6 +16,9 @@ export default function ZakatScreen() {
   const [savings, setSavings] = useState('');
   const [result, setResult] = useState<any>(null);
   const [currency, setCurrency] = useState('USD');
+  const [exchangeRate, setExchangeRate] = useState(1); // rate: 1 USD = X local
+  const [rateLoading, setRateLoading] = useState(false);
+  const [rateError, setRateError] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [fadeAnim] = useState(new Animated.Value(0));
@@ -34,8 +38,23 @@ export default function ZakatScreen() {
   const loadSettings = async () => {
     const s = await SettingsService.getSettings();
     setSettings(s);
-    if (s.currency) setCurrency(s.currency);
+    const savedCurrency = s.currency ?? 'USD';
+    setCurrency(savedCurrency);
+    await fetchRate(savedCurrency);
   };
+
+  const fetchRate = useCallback(async (currencyCode: string) => {
+    setRateLoading(true);
+    setRateError(false);
+    try {
+      const rate = await CurrencyService.getRate(currencyCode);
+      setExchangeRate(rate);
+    } catch {
+      setRateError(true);
+    } finally {
+      setRateLoading(false);
+    }
+  }, []);
 
   const getSymbol = () => {
     const curr = CURRENCIES.find(c => c.code === currency);
@@ -56,15 +75,22 @@ export default function ZakatScreen() {
     setCurrency(newCurrency);
     setModalVisible(false);
     setSearchQuery('');
+    setResult(null); // clear stale result
     await SettingsService.updateSetting('currency', newCurrency);
+    await fetchRate(newCurrency);
   };
 
+  // Nisab in local currency
+  const nisabInLocal = ZakatService.getNisabValue('gold') * exchangeRate;
+
   const handleCalculate = () => {
-    const numericSavings = parseFloat(savings) || 0;
-    
+    const numericSavingsLocal = parseFloat(savings) || 0;
+    // Convert user input from local currency → USD for the calculation engine
+    const numericSavingsUSD = numericSavingsLocal / exchangeRate;
+
     const numericAssets = {
       cash: 0,
-      savings: numericSavings,
+      savings: numericSavingsUSD,
       gold: 0,
       silver: 0,
       investments: 0,
@@ -72,8 +98,14 @@ export default function ZakatScreen() {
       liabilities: 0,
     };
 
-    const calc = ZakatService.calculateZakat(numericAssets);
-    setResult(calc);
+    const calcUSD = ZakatService.calculateZakat(numericAssets);
+
+    // Convert results back to local currency for display
+    setResult({
+      ...calcUSD,
+      totalWealth: calcUSD.totalWealth * exchangeRate,
+      zakatDue: calcUSD.zakatDue * exchangeRate,
+    });
   };
 
   const InputField = ({ label, value, onChange, icon: Icon, placeholder }: any) => (
@@ -104,6 +136,23 @@ export default function ZakatScreen() {
           <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
             Calculate your obligatory charity with precision and ease.
           </Text>
+          {/* Exchange rate badge */}
+          <View style={[styles.rateBadge, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            {rateLoading ? (
+              <ActivityIndicator size="small" color={theme.primary} />
+            ) : rateError ? (
+              <TouchableOpacity style={styles.rateRow} onPress={() => fetchRate(currency)}>
+                <RefreshCw size={13} color={theme.error} />
+                <Text style={[styles.rateText, { color: theme.error }]}>Rate unavailable – tap to retry</Text>
+              </TouchableOpacity>
+            ) : currency === 'USD' ? (
+              <Text style={[styles.rateText, { color: theme.textSecondary }]}>Base currency (USD)</Text>
+            ) : (
+              <Text style={[styles.rateText, { color: theme.textSecondary }]}>
+                1 USD = {exchangeRate.toLocaleString(undefined, { maximumFractionDigits: 4 })} {currency}
+              </Text>
+            )}
+          </View>
         </Animated.View>
 
         <View style={styles.formCard}>
@@ -173,7 +222,7 @@ export default function ZakatScreen() {
         <View style={styles.infoSection}>
           <Info size={16} color={theme.textSecondary} />
           <Text style={[styles.infoText, { color: theme.textSecondary }]}>
-            Zakat is calculated as 2.5% of your total savings, provided they have been held for one lunar year and exceed the Nisab threshold (~$6,500 based on current gold prices).
+            Zakat is 2.5% of net savings held for one lunar year, once they exceed the Nisab threshold (~{getSymbol()}{nisabInLocal.toLocaleString(undefined, { maximumFractionDigits: 0 })} based on current gold prices).
           </Text>
         </View>
       </ScrollView>
@@ -260,6 +309,23 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 20,
     lineHeight: 20,
+    marginBottom: 12,
+  },
+  rateBadge: {
+    marginTop: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  rateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  rateText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
   formCard: {
     borderRadius: 24,
