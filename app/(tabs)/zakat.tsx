@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme, TextInput, Animated, Dimensions } from 'react-native';
-import { Calculator, Wallet, Coins, TrendingUp, Info, ChevronRight, Check } from 'lucide-react-native';
+import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme, TextInput, Animated, Dimensions, Modal, FlatList } from 'react-native';
+import { Calculator, Wallet, Coins, TrendingUp, Info, ChevronRight, Check, Search, X } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import { Text } from '@/components/Themed';
 import { Colors } from '../../src/theme/colors';
 import { SettingsService, AppSettings } from '../../src/services/settingsService';
 import { ZakatService } from '../../src/services/zakatService';
+import { CURRENCIES, Currency } from '../../src/constants/currenciesData';
 
 const { width } = Dimensions.get('window');
 
@@ -14,6 +15,8 @@ export default function ZakatScreen() {
   const [savings, setSavings] = useState('');
   const [result, setResult] = useState<any>(null);
   const [currency, setCurrency] = useState('USD');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [fadeAnim] = useState(new Animated.Value(0));
 
   const systemColorScheme = useColorScheme() ?? 'light';
@@ -34,29 +37,25 @@ export default function ZakatScreen() {
     if (s.currency) setCurrency(s.currency);
   };
 
-  const currencySymbols: Record<string, string> = {
-    USD: '$',
-    GBP: '£',
-    EUR: '€',
-    INR: '₹',
-    SAR: 'SR',
-    AED: 'DH',
-    PKR: 'Rs',
-    BDT: '৳',
-    AUD: 'A$',
-    CAD: 'C$',
-    JPY: '¥',
-    CNY: '¥',
-    MYR: 'RM',
-    IDR: 'Rp',
-    QAR: 'QR',
-    KWD: 'KD',
+  const getSymbol = () => {
+    const curr = CURRENCIES.find(c => c.code === currency);
+    return curr ? curr.symbol : '$';
   };
 
-  const getSymbol = () => currencySymbols[currency] || '$';
+  const getCurrencyName = () => {
+    const curr = CURRENCIES.find(c => c.code === currency);
+    return curr ? curr.name : 'US Dollar';
+  };
+
+  const filteredCurrencies = CURRENCIES.filter(c => 
+    c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    c.code.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleCurrencyChange = async (newCurrency: string) => {
     setCurrency(newCurrency);
+    setModalVisible(false);
+    setSearchQuery('');
     await SettingsService.updateSetting('currency', newCurrency);
   };
 
@@ -109,29 +108,22 @@ export default function ZakatScreen() {
 
         <View style={styles.formCard}>
           <View style={styles.currencyRow}>
-            <Text style={[styles.sectionTitle, { color: theme.text, marginTop: 0 }]}>Your Savings</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.currencyPicker}>
-              {Object.keys(currencySymbols).map((c) => (
-                <TouchableOpacity 
-                  key={c} 
-                  onPress={() => handleCurrencyChange(c)}
-                  style={[
-                    styles.currencyChip, 
-                    { backgroundColor: currency === c ? theme.primary : theme.surface, borderColor: theme.border }
-                  ]}
-                >
-                  <Text style={{ color: currency === c ? '#FFF' : theme.text, fontWeight: 'bold', fontSize: 12 }}>{c}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            <Text style={[styles.sectionTitle, { color: theme.text, marginTop: 0 }]}>Currency</Text>
+            <TouchableOpacity 
+              style={[styles.currencySelector, { backgroundColor: theme.surface, borderColor: theme.border }]}
+              onPress={() => setModalVisible(true)}
+            >
+              <Text style={[styles.currencySelectorText, { color: theme.text }]}>{currency} ({getSymbol()})</Text>
+              <ChevronRight size={16} color={theme.textSecondary} />
+            </TouchableOpacity>
           </View>
 
           <InputField 
-            label={`1 Year Bank Savings (${getSymbol()})`} 
+            label={`1 Year Bank Savings in ${getCurrencyName()}`} 
             value={savings} 
             onChange={(v: string) => setSavings(v)}
             icon={Wallet}
-            placeholder="Enter total savings"
+            placeholder={`Amount in ${currency}`}
           />
 
           <TouchableOpacity 
@@ -185,6 +177,54 @@ export default function ZakatScreen() {
           </Text>
         </View>
       </ScrollView>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <BlurView intensity={80} style={StyleSheet.absoluteFill} />
+          <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Select Currency</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <X size={24} color={theme.text} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={[styles.searchBar, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+              <Search size={20} color={theme.textSecondary} />
+              <TextInput
+                style={[styles.searchInput, { color: theme.text }]}
+                placeholder="Search currency..."
+                placeholderTextColor={theme.textSecondary}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+            </View>
+
+            <FlatList
+              data={filteredCurrencies}
+              keyExtractor={(item) => item.code}
+              renderItem={({ item }) => (
+                <TouchableOpacity 
+                  style={[styles.currencyItem, { borderBottomColor: theme.border }]}
+                  onPress={() => handleCurrencyChange(item.code)}
+                >
+                  <View style={styles.currencyInfo}>
+                    <Text style={[styles.currencyCode, { color: theme.text }]}>{item.code}</Text>
+                    <Text style={[styles.currencyName, { color: theme.textSecondary }]}>{item.name}</Text>
+                  </View>
+                  <Text style={[styles.currencySymbol, { color: theme.primary }]}>{item.symbol}</Text>
+                </TouchableOpacity>
+              )}
+              contentContainerStyle={styles.modalList}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -236,15 +276,82 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 8,
   },
-  currencyPicker: {
-    marginLeft: 12,
-  },
-  currencyChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
+  currencySelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
     borderWidth: 1,
-    marginRight: 6,
+    gap: 8,
+  },
+  currencySelectorText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    height: '80%',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    height: 50,
+    marginBottom: 20,
+    gap: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+  },
+  modalList: {
+    paddingBottom: 40,
+  },
+  currencyItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+  },
+  currencyInfo: {
+    flex: 1,
+  },
+  currencyCode: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  currencyName: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  currencySymbol: {
+    fontSize: 20,
+    fontWeight: '600',
   },
   inputGroup: {
     gap: 8,
