@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, TouchableOpacity, useColorScheme, ScrollView, Animated, Dimensions, Modal } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, useColorScheme, ScrollView, Animated, Dimensions, Modal, Platform } from 'react-native';
 import { Shield, Lock, Smartphone, Timer, Check, AlertCircle, X, ExternalLink } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import { Text } from '@/components/Themed';
@@ -21,11 +21,26 @@ export default function FocusScreen() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [isPaid, setIsPaid] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isFocusing, setIsFocusing] = useState(false);
+  const [timer, setTimer] = useState(1500); // 25 minutes
   const [selectedApps, setSelectedApps] = useState<string[]>(['ig', 'tt']);
   const [fadeAnim] = useState(new Animated.Value(0));
   
   const systemColorScheme = useColorScheme() ?? 'light';
   const theme = settings ? (Colors as any)[settings.theme] : (Colors as any)[systemColorScheme];
+
+  useEffect(() => {
+    let interval: any;
+    if (isFocusing && timer > 0) {
+      interval = setInterval(() => {
+        setTimer(prev => prev - 1);
+      }, 1000);
+    } else if (timer === 0) {
+      setIsFocusing(false);
+      setTimer(1500);
+    }
+    return () => clearInterval(interval);
+  }, [isFocusing, timer]);
 
   useEffect(() => {
     loadSettings();
@@ -55,6 +70,20 @@ export default function FocusScreen() {
     setSelectedApps(prev => 
       prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
     );
+  };
+
+  const startFocusSession = () => {
+    if (!isPaid) {
+      setShowPaymentModal(true);
+      return;
+    }
+    setIsFocusing(true);
+  };
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
   const handlePurchase = async () => {
@@ -136,10 +165,10 @@ export default function FocusScreen() {
             styles.startButton, 
             { backgroundColor: isPaid ? theme.primary : theme.border }
           ]}
-          onPress={() => !isPaid && setShowPaymentModal(true)}
+          onPress={startFocusSession}
         >
           <Smartphone size={20} color="#FFF" />
-          <Text style={styles.startButtonText}>Start Focus Session</Text>
+          <Text style={styles.startButtonText}>{isFocusing ? 'Session Active' : 'Start Focus Session'}</Text>
         </TouchableOpacity>
         
         <View style={styles.footerInfo}>
@@ -149,6 +178,35 @@ export default function FocusScreen() {
           </Text>
         </View>
       </ScrollView>
+
+      {/* Focus Overlay */}
+      {isFocusing && (
+        <Modal transparent animationType="fade">
+          <View style={styles.focusOverlay}>
+            <BlurView intensity={90} tint="dark" style={StyleSheet.absoluteFill} />
+            <Shield size={100} color={theme.primary} />
+            <Text style={styles.focusTitle}>Focus Mode Active</Text>
+            <Text style={styles.focusTimer}>{formatTime(timer)}</Text>
+            <Text style={styles.focusSubtitle}>
+              {selectedApps.length} apps are currently being suppressed.
+            </Text>
+            
+            <View style={styles.activeAppList}>
+              {selectedApps.map(id => {
+                const app = DISTRACTION_APPS.find(a => a.id === id);
+                return <Text key={id} style={styles.activeAppIcon}>{app?.icon}</Text>
+              })}
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.stopButton, { borderColor: theme.error }]}
+              onPress={() => setIsFocusing(false)}
+            >
+              <Text style={[styles.stopButtonText, { color: theme.error }]}>End Session Early</Text>
+            </TouchableOpacity>
+          </View>
+        </Modal>
+      )}
 
       {/* Payment Modal */}
       <Modal
@@ -453,5 +511,49 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     opacity: 0.7,
+  },
+  focusOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  focusTitle: {
+    color: '#FFF',
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginTop: 30,
+  },
+  focusTimer: {
+    color: '#FFF',
+    fontSize: 64,
+    fontWeight: '300',
+    marginVertical: 20,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  focusSubtitle: {
+    color: '#FFF',
+    fontSize: 16,
+    opacity: 0.8,
+    textAlign: 'center',
+  },
+  activeAppList: {
+    flexDirection: 'row',
+    gap: 15,
+    marginTop: 20,
+    marginBottom: 50,
+  },
+  activeAppIcon: {
+    fontSize: 32,
+  },
+  stopButton: {
+    borderWidth: 1,
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 30,
+  },
+  stopButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
