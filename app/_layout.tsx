@@ -11,7 +11,6 @@ import { initDatabase } from '../src/database/db';
 import { Audio as ExpoAudio } from 'expo-av';
 import { QuranService } from '../src/services/quranService';
 import { CustomSplashScreen } from '../src/components/CustomSplashScreen';
-import { NotificationService } from '../src/services/notificationService';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -53,8 +52,6 @@ export default function RootLayout() {
       try {
         await initDatabase();
         await QuranService.seedInitialData();
-        await NotificationService.setupNotificationChannels();
-        await NotificationService.schedulePrayerNotifications();
         setDbReady(true);
       } catch (e) {
         console.error('Database setup error:', e);
