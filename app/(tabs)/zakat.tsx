@@ -11,15 +11,7 @@ const { width } = Dimensions.get('window');
 
 export default function ZakatScreen() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
-  const [assets, setAssets] = useState({
-    cash: '',
-    savings: '',
-    gold: '',
-    silver: '',
-    investments: '',
-    businessAssets: '',
-    liabilities: '',
-  });
+  const [savings, setSavings] = useState('');
   const [result, setResult] = useState<any>(null);
   const [fadeAnim] = useState(new Animated.Value(0));
 
@@ -41,14 +33,16 @@ export default function ZakatScreen() {
   };
 
   const handleCalculate = () => {
+    const numericSavings = parseFloat(savings) || 0;
+    
     const numericAssets = {
-      cash: parseFloat(assets.cash) || 0,
-      savings: parseFloat(assets.savings) || 0,
-      gold: parseFloat(assets.gold) || 0,
-      silver: parseFloat(assets.silver) || 0,
-      investments: parseFloat(assets.investments) || 0,
-      businessAssets: parseFloat(assets.businessAssets) || 0,
-      liabilities: parseFloat(assets.liabilities) || 0,
+      cash: 0,
+      savings: numericSavings,
+      gold: 0,
+      silver: 0,
+      investments: 0,
+      businessAssets: 0,
+      liabilities: 0,
     };
 
     const calc = ZakatService.calculateZakat(numericAssets);
@@ -86,45 +80,13 @@ export default function ZakatScreen() {
         </Animated.View>
 
         <View style={styles.formCard}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Assets & Wealth</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Your Savings</Text>
           <InputField 
-            label="Cash on Hand" 
-            value={assets.cash} 
-            onChange={(v: string) => setAssets(prev => ({...prev, cash: v}))}
+            label="1 Year Bank Savings" 
+            value={savings} 
+            onChange={(v: string) => setSavings(v)}
             icon={Wallet}
-            placeholder="0.00"
-          />
-          <InputField 
-            label="Bank Savings" 
-            value={assets.savings} 
-            onChange={(v: string) => setAssets(prev => ({...prev, savings: v}))}
-            icon={Wallet}
-            placeholder="0.00"
-          />
-          <InputField 
-            label="Gold & Silver Value" 
-            value={assets.gold} 
-            onChange={(v: string) => setAssets(prev => ({...prev, gold: v}))}
-            icon={Coins}
-            placeholder="0.00"
-          />
-          <InputField 
-            label="Investments (Stocks, etc)" 
-            value={assets.investments} 
-            onChange={(v: string) => setAssets(prev => ({...prev, investments: v}))}
-            icon={TrendingUp}
-            placeholder="0.00"
-          />
-          
-          <View style={styles.divider} />
-          
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Liabilities</Text>
-          <InputField 
-            label="Debts & Expenses" 
-            value={assets.liabilities} 
-            onChange={(v: string) => setAssets(prev => ({...prev, liabilities: v}))}
-            icon={Info}
-            placeholder="0.00"
+            placeholder="Enter total savings"
           />
 
           <TouchableOpacity 
@@ -174,8 +136,7 @@ export default function ZakatScreen() {
         <View style={styles.infoSection}>
           <Info size={16} color={theme.textSecondary} />
           <Text style={[styles.infoText, { color: theme.textSecondary }]}>
-            Nisab is calculated based on the current market price of Gold (87.48g). 
-            Values are approximate and should be verified with a scholar.
+            Zakat is calculated as 2.5% of your total savings, provided they have been held for one lunar year and exceed the Nisab threshold (~$6,500 based on current gold prices).
           </Text>
         </View>
       </ScrollView>

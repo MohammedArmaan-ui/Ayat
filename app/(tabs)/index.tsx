@@ -17,7 +17,7 @@ const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
-  const [timings, setTimings] = useState<PrayerTimings | null>(null);
+  const [timings, setTimings] = useState<PrayerData | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [hijriDate, setHijriDate] = useState<any>(null);
   const [dailyDua, setDailyDua] = useState(DUAS[0]);
@@ -393,29 +393,40 @@ const styles = StyleSheet.create({
   },
   featuredOverlay: {
     ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    padding: 20,
     justifyContent: 'flex-end',
   },
-  blur: {
-    ...StyleSheet.absoluteFillObject,
+  categoryBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginBottom: 8,
   },
-  featuredContent: {
-    padding: 20,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-  },
-  featuredTag: {
-    color: '#10B981',
+  categoryText: {
     fontSize: 10,
-    fontWeight: '900',
-    marginBottom: 4,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
   },
   featuredTitle: {
     color: '#FFF',
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
+    marginBottom: 12,
   },
-  featuredSubtitle: {
-    color: '#F3F4F6',
+  featuredMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  metaText: {
+    color: '#EEE',
     fontSize: 12,
-    opacity: 0.8,
   },
 });

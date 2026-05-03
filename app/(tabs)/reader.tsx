@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { StyleSheet, FlatList, View, TouchableOpacity, useColorScheme, ActivityIndicator, Alert, Image } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { Search, Settings, ChevronDown } from 'lucide-react-native';
+import { Search, Settings, ChevronDown, BookOpen } from 'lucide-react-native';
 
 import { Text } from '@/components/Themed';
 import { AyahCard } from '../../src/components/AyahCard';

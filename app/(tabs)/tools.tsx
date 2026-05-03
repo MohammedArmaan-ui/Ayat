@@ -51,12 +51,6 @@ export default function ToolsScreen() {
 
         <View style={styles.list}>
           <ToolItem 
-            icon={Compass} 
-            title="Qibla Finder" 
-            description="Find the direction of the Kaaba"
-            route="/qibla"
-          />
-          <ToolItem 
             icon={Calendar} 
             title="Islamic Calendar" 
             description="Hijri dates and holy days"
@@ -71,7 +65,7 @@ export default function ToolsScreen() {
           <ToolItem 
             icon={RefreshCw} 
             title="Tasbih Counter" 
-            description="Digital prayer beads with custom goals and history."
+            description="Digital prayer beads"
             route="/(tabs)/tasbih"
           />
         </View>

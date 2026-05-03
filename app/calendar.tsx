@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme, ActivityIndicator, Dimensions } from 'react-native';
+
+const { width } = Dimensions.get('window');
 import { Stack, useRouter } from 'expo-router';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Star, Info } from 'lucide-react-native';
 
@@ -75,7 +77,7 @@ export default function CalendarScreen() {
                     {currentHijri?.month.en} {currentHijri?.year}
                   </Text>
                   <Text style={[styles.gregorianMonth, { color: theme.textSecondary }]}>
-                    {viewDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
+                    {currentHijri?.month.ar}
                   </Text>
                 </>
               )}
@@ -85,10 +87,37 @@ export default function CalendarScreen() {
             </TouchableOpacity>
           </View>
 
-          <View style={[styles.hijriBadge, { backgroundColor: theme.primary + '15' }]}>
-            <Text style={[styles.hijriDateText, { color: theme.primary }]}>
-              {currentHijri ? `${currentHijri.day} ${currentHijri.month.ar}` : '--'}
-            </Text>
+          {/* Hijri Grid */}
+          <View style={styles.grid}>
+            {Array.from({ length: 30 }).map((_, i) => {
+              const dayNum = i + 1;
+              const hijriDateStr = `${dayNum.toString().padStart(2, '0')}-${currentHijri?.month.number.toString().padStart(2, '0')}`;
+              const holiday = ISLAMIC_HOLIDAYS.find(h => h.hijriDate === hijriDateStr);
+              const isToday = currentHijri && parseInt(currentHijri.day) === dayNum;
+              
+              return (
+                <View 
+                  key={i} 
+                  style={[
+                    styles.gridItem, 
+                    holiday && { backgroundColor: theme.primary + '20', borderColor: theme.primary },
+                    isToday && { backgroundColor: theme.primary, borderColor: theme.primary }
+                  ]}
+                >
+                  <Text style={[
+                    styles.gridDay, 
+                    { color: theme.text },
+                    holiday && { color: theme.primary, fontWeight: 'bold' },
+                    isToday && { color: '#FFF', fontWeight: 'bold' }
+                  ]}>
+                    {dayNum}
+                  </Text>
+                  {holiday && (
+                    <View style={[styles.holidayDot, { backgroundColor: theme.primary }]} />
+                  )}
+                </View>
+              );
+            })}
           </View>
         </View>
 
@@ -181,9 +210,31 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 12,
   },
-  hijriDateText: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'center',
+    width: '100%',
+  },
+  gridItem: {
+    width: (width - 40 - (6 * 8)) / 7 - 2, 
+    height: (width - 40 - (6 * 8)) / 7 - 2,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gridDay: {
+    fontSize: 15,
+  },
+  holidayDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    position: 'absolute',
+    bottom: 6,
   },
   section: {
     marginBottom: 24,
