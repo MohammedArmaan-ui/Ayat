@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme, Animated } from 'react-native';
-import { Calculator, RefreshCw, ChevronRight, Info, Compass, Calendar, Heart } from 'lucide-react-native';
+import { Calculator, RefreshCw, ChevronRight, Info, Compass, Calendar, Heart, Sun } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
 import { Text } from '@/components/Themed';
