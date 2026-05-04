@@ -4,6 +4,7 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
@@ -49,13 +50,17 @@ export default function RootLayout() {
 
   useEffect(() => {
     async function setup() {
+      console.log('Starting setup...');
       try {
+        console.log('Initializing database...');
         await initDatabase();
+        console.log('Seeding initial data...');
         await QuranService.seedInitialData();
+        console.log('Database ready!');
         setDbReady(true);
       } catch (e) {
         console.error('Database setup error:', e);
-        setDbReady(true); // Proceed anyway for now
+        setDbReady(true); // Proceed anyway to avoid permanent black screen
       }
     }
     setup();
@@ -67,13 +72,19 @@ export default function RootLayout() {
   }, [error]);
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
+    if (loaded && dbReady) {
+      SplashScreen.hideAsync().catch(() => {
+        /* ignore */
+      });
     }
-  }, [loaded]);
+  }, [loaded, dbReady]);
 
   if (!loaded || !dbReady) {
-    return null;
+    return (
+      <View style={{ flex: 1, backgroundColor: '#064E3B', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#ffffff" />
+      </View>
+    );
   }
 
   if (!isSplashFinished) {
