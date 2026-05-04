@@ -1,9 +1,38 @@
 import * as SQLite from 'expo-sqlite';
+import { Platform } from 'react-native';
 
-export const db = SQLite.openDatabaseSync('ayat.db');
+// Use a proxy or a getter to handle the database instance safely across platforms
+let _db: any = null;
+
+export const getDb = () => {
+  if (Platform.OS === 'web' && typeof window === 'undefined') {
+    // Return a mock or null during static rendering (Node.js environment)
+    return null;
+  }
+
+  if (!_db) {
+    try {
+      _db = SQLite.openDatabaseSync('ayat.db');
+    } catch (e) {
+      console.error('Failed to open database:', e);
+      // Fallback or rethrow depending on needs.
+      // For now, we'll let it throw so we can see the error in console.
+      throw e;
+    }
+  }
+  return _db;
+};
+
+// For backward compatibility with existing imports
+export const db = Platform.OS === 'web' && typeof window === 'undefined' ? {} as any : SQLite.openDatabaseSync('ayat.db');
 
 export const initDatabase = async () => {
-  await db.execAsync(`
+  if (Platform.OS === 'web' && typeof window === 'undefined') return;
+
+  const database = getDb();
+  if (!database) return;
+
+  await database.execAsync(`
     PRAGMA journal_mode = WAL;
     
     CREATE TABLE IF NOT EXISTS surah (

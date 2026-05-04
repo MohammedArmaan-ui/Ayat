@@ -1,4 +1,4 @@
-import { db } from '../database/db';
+import { getDb } from '../database/db';
 
 export type AppTheme = 'light' | 'dark' | 'sepia';
 export type TranslationLanguage = 'en' | 'bn' | 'ur' | 'tr';
@@ -41,6 +41,8 @@ const DEFAULT_SETTINGS: AppSettings = {
 export const SettingsService = {
   getSettings: async (): Promise<AppSettings> => {
     try {
+      const db = getDb();
+      if (!db) return DEFAULT_SETTINGS;
       const rows = await db.getAllAsync<{ key: string, value: string }>('SELECT * FROM settings');
       const settings = { ...DEFAULT_SETTINGS };
       rows.forEach(row => {
@@ -53,6 +55,8 @@ export const SettingsService = {
   },
 
   updateSetting: async (key: keyof AppSettings, value: any): Promise<void> => {
+    const db = getDb();
+    if (!db) return;
     await db.runAsync(
       'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
       [key, JSON.stringify(value)]

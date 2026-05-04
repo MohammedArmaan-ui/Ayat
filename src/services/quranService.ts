@@ -1,13 +1,17 @@
-import { db } from '../database/db';
+import { getDb } from '../database/db';
 import { Surah, Ayah } from '../models/types';
 import { SURAH_DATA } from '../constants/surahData';
 
 export const QuranService = {
   getSurahs: async (): Promise<Surah[]> => {
+    const db = getDb();
+    if (!db) return [];
     return await db.getAllAsync<Surah>('SELECT * FROM surah ORDER BY id ASC');
   },
 
   getAyahsBySurah: async (surahId: number): Promise<Ayah[]> => {
+    const db = getDb();
+    if (!db) return [];
     const existing = await db.getAllAsync<Ayah>(
       `SELECT a.*, 
               t.text as translation,
@@ -80,6 +84,8 @@ export const QuranService = {
   },
 
   seedInitialData: async () => {
+    const db = getDb();
+    if (!db) return;
     // Check if Fatihah is doubled or if we are missing surahs
     const fatihahCount = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM ayah WHERE surah_id = 1');
     const surahCount = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM surah');
@@ -124,6 +130,8 @@ export const QuranService = {
   },
 
   toggleBookmark: async (ayahId: number): Promise<boolean> => {
+    const db = getDb();
+    if (!db) return false;
     const existing = await db.getFirstAsync<{ id: number }>('SELECT id FROM bookmark WHERE ayah_id = ?', [ayahId]);
     if (existing) {
       await db.runAsync('DELETE FROM bookmark WHERE ayah_id = ?', [ayahId]);
@@ -135,11 +143,15 @@ export const QuranService = {
   },
 
   isBookmarked: async (ayahId: number): Promise<boolean> => {
+    const db = getDb();
+    if (!db) return false;
     const result = await db.getFirstAsync<{ id: number }>('SELECT id FROM bookmark WHERE ayah_id = ?', [ayahId]);
     return !!result;
   },
 
   saveReflection: async (ayahId: number, note: string): Promise<void> => {
+    const db = getDb();
+    if (!db) return;
     await db.runAsync('INSERT INTO reflection (ayah_id, note) VALUES (?, ?)', [ayahId, note]);
   }
 };

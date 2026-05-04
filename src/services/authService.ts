@@ -1,9 +1,11 @@
-import { db } from '../database/db';
+import { getDb } from '../database/db';
 import { SettingsService } from './settingsService';
 
 export const AuthService = {
   async signup(name: string, email: string, password: string): Promise<{ success: boolean; message?: string }> {
     try {
+      const db = getDb();
+      if (!db) return { success: false, message: 'Database not ready.' };
       if (!name || !email || !password) {
         return { success: false, message: 'All fields are required.' };
       }
@@ -42,6 +44,8 @@ export const AuthService = {
 
   async login(email: string, password: string): Promise<{ success: boolean; message?: string }> {
     try {
+      const db = getDb();
+      if (!db) return { success: false, message: 'Database not ready.' };
       if (!email || !password) {
         return { success: false, message: 'Email and password are required.' };
       }
@@ -69,6 +73,8 @@ export const AuthService = {
 
   async hasUsers(): Promise<boolean> {
     try {
+      const db = getDb();
+      if (!db) return false;
       const user = await db.getFirstAsync<{ id: number }>('SELECT id FROM users LIMIT 1');
       return !!user;
     } catch (error) {
@@ -78,6 +84,8 @@ export const AuthService = {
 
   async getFirstUser(): Promise<{ name: string, email: string } | null> {
     try {
+      const db = getDb();
+      if (!db) return null;
       const user = await db.getFirstAsync<{ name: string, email: string }>('SELECT name, email FROM users LIMIT 1');
       return user || null;
     } catch (error) {

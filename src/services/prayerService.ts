@@ -1,4 +1,4 @@
-import { db } from '../database/db';
+import { getDb } from '../database/db';
 
 export interface HijriDate {
   date: string;
@@ -77,6 +77,8 @@ export const PrayerService = {
 
   getTrackedPrayers: async (date: string): Promise<Record<string, boolean>> => {
     try {
+      const db = getDb();
+      if (!db) return {};
       const rows = await db.getAllAsync<{ prayer_name: string, completed: number }>('SELECT prayer_name, completed FROM prayer_tracking WHERE date = ?', [date]);
       const result: Record<string, boolean> = {};
       rows.forEach(r => {
@@ -91,6 +93,8 @@ export const PrayerService = {
 
   togglePrayer: async (date: string, prayer_name: string, completed: boolean): Promise<void> => {
     try {
+      const db = getDb();
+      if (!db) return;
       await db.runAsync(
         'INSERT INTO prayer_tracking (date, prayer_name, completed) VALUES (?, ?, ?) ON CONFLICT(date, prayer_name) DO UPDATE SET completed = ?',
         [date, prayer_name, completed ? 1 : 0, completed ? 1 : 0]
