@@ -23,36 +23,36 @@ export interface PrayerData {
   hijri: HijriDate;
 }
 
+const prayerTimeCache = new Map<string, PrayerData>();
+
 export const PrayerService = {
   getPrayerTimes: async (city: string = 'London', country: string = 'UK'): Promise<PrayerData | null> => {
     const finalCity = city || 'London';
     const finalCountry = country || 'UK';
-    try {
-      const response = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=${encodeURIComponent(finalCity)}&country=${encodeURIComponent(finalCountry)}&method=2`);
-      const json = await response.json();
-      if (json.code === 200) {
-        return {
-          timings: json.data.timings,
-          hijri: json.data.date.hijri
-        };
-      }
-    } catch (e) {
-      console.error('Failed to fetch prayer times:', e);
-    }
-    return null;
+    const today = new Date();
+    const dateString = `${today.getDate().toString().padStart(2, '0')}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getFullYear()}`;
+    return PrayerService.getPrayerTimesByDate(dateString, finalCity, finalCountry);
   },
 
   getPrayerTimesByDate: async (dateString: string, city: string = 'London', country: string = 'UK'): Promise<PrayerData | null> => {
     const finalCity = city || 'London';
     const finalCountry = country || 'UK';
+    const cacheKey = `${dateString}_${finalCity}_${finalCountry}`;
+
+    if (prayerTimeCache.has(cacheKey)) {
+      return prayerTimeCache.get(cacheKey)!;
+    }
+
     try {
       const response = await fetch(`https://api.aladhan.com/v1/timingsByCity/${dateString}?city=${encodeURIComponent(finalCity)}&country=${encodeURIComponent(finalCountry)}&method=2`);
       const json = await response.json();
       if (json.code === 200) {
-        return {
+        const data: PrayerData = {
           timings: json.data.timings,
           hijri: json.data.date.hijri
         };
+        prayerTimeCache.set(cacheKey, data);
+        return data;
       }
     } catch (e) {
       console.error('Failed to fetch prayer times for date:', e);

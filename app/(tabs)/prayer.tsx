@@ -22,14 +22,14 @@ export default function PrayerScreen() {
   const theme = settings ? (Colors as any)[settings.theme] : (Colors as any)[systemColorScheme];
 
   useEffect(() => {
-    // Generate next 5 days
-    const nextDates = [];
-    for (let i = 0; i < 5; i++) {
+    // Generate dates: 2 days back (-2, -1), today (0), and next 4 days (1, 2, 3, 4)
+    const generatedDates = [];
+    for (let i = -2; i <= 4; i++) {
       const d = new Date();
       d.setDate(d.getDate() + i);
-      nextDates.push(d);
+      generatedDates.push(d);
     }
-    setDates(nextDates);
+    setDates(generatedDates);
   }, []);
 
   useFocusEffect(
@@ -176,6 +176,19 @@ export default function PrayerScreen() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateScroll} contentContainerStyle={styles.dateScrollContent}>
         {dates.map((d, index) => {
           const isSelected = d.getDate() === selectedDate.getDate() && d.getMonth() === selectedDate.getMonth();
+          
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const checkDate = new Date(d);
+          checkDate.setHours(0, 0, 0, 0);
+          const diffDays = Math.round((checkDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+          let label = d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' });
+          if (diffDays === 0) label = 'Today';
+          else if (diffDays === -1) label = 'Yesterday';
+          else if (diffDays === -2) label = '2 Days Ago';
+          else if (diffDays === 1) label = 'Tomorrow';
+
           return (
             <TouchableOpacity 
               key={index} 
@@ -189,7 +202,7 @@ export default function PrayerScreen() {
               ]}
             >
               <Text style={{ color: isSelected ? '#FFF' : theme.text, fontWeight: isSelected ? 'bold' : 'normal' }}>
-                {index === 0 ? 'Today' : d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' })}
+                {label}
               </Text>
             </TouchableOpacity>
           );
