@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { StyleSheet, View, ScrollView, useColorScheme, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { Clock, MapPin, ChevronRight, CheckCircle2, Circle } from 'lucide-react-native';
+import { Clock, MapPin, ChevronRight, CheckCircle2, Circle, Calendar as CalendarIcon } from 'lucide-react-native';
 
 import { Text } from '@/components/Themed';
 import { Colors } from '../../src/theme/colors';
 import { SettingsService, AppSettings } from '../../src/services/settingsService';
 import { PrayerService, PrayerData } from '../../src/services/prayerService';
+import { PrayerAnalyticsModal } from '../../src/components/PrayerAnalyticsModal';
 
 export default function PrayerScreen() {
   const [timings, setTimings] = useState<PrayerData | null>(null);
@@ -17,6 +18,7 @@ export default function PrayerScreen() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [dates, setDates] = useState<Date[]>([]);
+  const [analyticsVisible, setAnalyticsVisible] = useState(false);
   
   const systemColorScheme = useColorScheme() ?? 'light';
   const theme = settings ? (Colors as any)[settings.theme] : (Colors as any)[systemColorScheme];
@@ -157,12 +159,24 @@ export default function PrayerScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />}
     >
       <View style={styles.header}>
-        <View style={styles.locationContainer}>
-          <MapPin size={18} color={theme.primary} />
-          <Text style={[styles.locationText, { color: theme.textSecondary }]}>
-            {settings?.locationCity}, {settings?.locationCountry}
-          </Text>
+        <View style={styles.headerTopRow}>
+          <View style={styles.locationContainer}>
+            <MapPin size={18} color={theme.primary} />
+            <Text style={[styles.locationText, { color: theme.textSecondary }]}>
+              {settings?.locationCity}, {settings?.locationCountry}
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.analyticsButton, { backgroundColor: theme.primary + '15', borderColor: theme.primary + '30' }]}
+            onPress={() => setAnalyticsVisible(true)}
+            activeOpacity={0.8}
+          >
+            <CalendarIcon size={14} color={theme.primary} />
+            <Text style={[styles.analyticsButtonText, { color: theme.primary }]}>Analytics</Text>
+          </TouchableOpacity>
         </View>
+
         <Text style={[styles.dateText, { color: theme.text }]}>
           {selectedDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
         </Text>
@@ -276,6 +290,13 @@ export default function PrayerScreen() {
           The Qibla is currently 119° SE from your location.
         </Text>
       </View>
+
+      <PrayerAnalyticsModal
+        visible={analyticsVisible}
+        onClose={() => setAnalyticsVisible(false)}
+        theme={theme}
+        onDataChanged={() => loadData(selectedDate)}
+      />
     </ScrollView>
   );
 }
@@ -293,10 +314,28 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingBottom: 12,
   },
+  headerTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  analyticsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  analyticsButtonText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
   },
   locationText: {
     fontSize: 14,
