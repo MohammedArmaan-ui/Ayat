@@ -2,12 +2,12 @@ import * as SQLite from 'expo-sqlite';
 import { Platform } from 'react-native';
 
 // Use a proxy or a getter to handle the database instance safely across platforms
-let _db: any = null;
+let _db: SQLite.SQLiteDatabase | null = null;
 
-export const getDb = () => {
+export const getDb = (): SQLite.SQLiteDatabase => {
   if (Platform.OS === 'web' && typeof window === 'undefined') {
     // Return a mock or null during static rendering (Node.js environment)
-    return null;
+    return null as any;
   }
 
   if (!_db) {
@@ -24,7 +24,7 @@ export const getDb = () => {
 };
 
 // For backward compatibility with existing imports
-export const db = Platform.OS === 'web' && typeof window === 'undefined' ? {} as any : SQLite.openDatabaseSync('ayat.db');
+export const db = (Platform.OS === 'web' && typeof window === 'undefined' ? {} : SQLite.openDatabaseSync('ayat.db')) as SQLite.SQLiteDatabase;
 
 export const initDatabase = async () => {
   if (Platform.OS === 'web' && typeof window === 'undefined') return;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme, Image, Dimensions, Animated } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { Clock, BookOpen, Calculator, RefreshCw, Book, ChevronRight, Heart, Bell, Settings } from 'lucide-react-native';
+import { Bell, Clock, BookOpen, ChevronRight, Heart, RefreshCw, Calculator, Book, QrCode } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 
 import { Text } from '@/components/Themed';
@@ -179,7 +179,7 @@ export default function HomeScreen() {
             <QuickLink icon={RefreshCw} title="Tasbih" route="/(tabs)/tasbih" />
             <QuickLink icon={Calculator} title="Zakat" route="/(tabs)/zakat" />
             <QuickLink icon={Book} title="Stories" route="/(tabs)/stories" />
-            <QuickLink icon={Settings} title="Settings" route="/(tabs)/settings" />
+            <QuickLink icon={QrCode} title="QR Code" route="/(tabs)/qr" />
           </View>
         </View>
 
