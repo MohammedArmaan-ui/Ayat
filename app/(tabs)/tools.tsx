@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme, Animated } from 'react-native';
-import { Calculator, RefreshCw, ChevronRight, Info, Compass, Calendar, Heart, Sun } from 'lucide-react-native';
+import { Calculator, RefreshCw, ChevronRight, Info, Compass, Calendar, Heart, Sun, HeartHandshake } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
 import { Text } from '@/components/Themed';
@@ -26,7 +26,7 @@ export default function ToolsScreen() {
   const ToolItem = ({ icon: Icon, title, description, route }: any) => (
     <TouchableOpacity 
       style={[styles.toolCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
-      onPress={() => router.push(route)}
+      onPress={() => router.push(route as any)}
     >
       <View style={[styles.iconContainer, { backgroundColor: theme.primary + '10' }]}>
         <Icon size={24} color={theme.primary} />
@@ -73,6 +73,12 @@ export default function ToolsScreen() {
             title="Zakat Calculator" 
             description="Calculate your yearly zakat"
             route="/(tabs)/zakat"
+          />
+          <ToolItem 
+            icon={HeartHandshake} 
+            title="Charity & Sadaqah" 
+            description="Give to verified causes & track donations"
+            route="/charity"
           />
           <ToolItem 
             icon={RefreshCw} 

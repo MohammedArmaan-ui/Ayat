@@ -34,6 +34,12 @@
 - **Nisab Thresholds**: Live or customizable gold/silver Nisab benchmarks.
 - **PDF Export & Share**: Generate clean, printable Zakat reports to share or archive.
 
+### 🤝 Charity & Sadaqah Hub
+- **Vetted Islamic Causes**: Verified campaigns for Gaza Emergency Relief, Clean Water Wells (Sadaqah Jariyah), Orphan Sponsorship, Food Rations, and Mosque Construction.
+- **Interactive Donation Flow**: Preset amounts and custom giving with currency support, anonymous donation options, and personal Du'a/intention notes.
+- **Giving History & Impact Summary**: Local SQLite tracking of total donations, causes supported, and instant official receipt generation.
+- **Admin Email Dispatch**: Every donation is asynchronously recorded and dispatched to the administrator.
+
 ### 📿 Smart Digital Tasbih
 - **Interactive Counter**: Touch-anywhere digital beads with realistic haptic vibration and sound effects.
 - **Multiple Built-in Dhikr**: SubhanAllah, Alhamdulillah, Allahu Akbar, Astaghfirullah, and custom phrases.

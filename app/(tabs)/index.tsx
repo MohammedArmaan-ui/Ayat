@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme, Image, Dimensions, Animated } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { Clock, BookOpen, Calculator, RefreshCw, Book, ChevronRight, Heart, Bell, Settings } from 'lucide-react-native';
+import { Clock, BookOpen, Calculator, RefreshCw, Book, ChevronRight, Heart, Bell, Settings, HeartHandshake } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 
 import { Text } from '@/components/Themed';
@@ -95,7 +95,7 @@ export default function HomeScreen() {
   const QuickLink = ({ icon: Icon, title, route }: any) => (
     <TouchableOpacity 
       style={[styles.quickLink, { backgroundColor: theme.surface }]}
-      onPress={() => router.push(route)}
+      onPress={() => router.push(route as any)}
     >
       <View style={[styles.linkIcon, { backgroundColor: theme.primary + '10' }]}>
         <Icon size={24} color={theme.primary} />
@@ -176,8 +176,9 @@ export default function HomeScreen() {
           <Text style={[styles.sectionTitle, { color: theme.text }]}>Quick Access</Text>
           <View style={styles.quickLinksGrid}>
             <QuickLink icon={BookOpen} title="Reader" route="/(tabs)/reader" />
-            <QuickLink icon={RefreshCw} title="Tasbih" route="/(tabs)/tasbih" />
+            <QuickLink icon={HeartHandshake} title="Charity" route="/charity" />
             <QuickLink icon={Calculator} title="Zakat" route="/(tabs)/zakat" />
+            <QuickLink icon={RefreshCw} title="Tasbih" route="/(tabs)/tasbih" />
             <QuickLink icon={Book} title="Stories" route="/(tabs)/stories" />
             <QuickLink icon={Settings} title="Settings" route="/(tabs)/settings" />
           </View>

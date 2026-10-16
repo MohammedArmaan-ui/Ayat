@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme, TextInput, Animated, Dimensions, Modal, FlatList, ActivityIndicator, Share } from 'react-native';
-import { Calculator, Wallet, Info, ChevronRight, Check, Search, X, RefreshCw, Printer, Share2, FileText } from 'lucide-react-native';
+import { Calculator, Wallet, Info, ChevronRight, Check, Search, X, RefreshCw, Printer, Share2, FileText, HeartHandshake } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { BlurView } from 'expo-blur';
@@ -24,6 +25,7 @@ export default function ZakatScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [fadeAnim] = useState(new Animated.Value(0));
+  const router = useRouter();
 
   const systemColorScheme = useColorScheme() ?? 'light';
   const theme = settings ? (Colors as any)[settings.theme] : (Colors as any)[systemColorScheme];
@@ -448,6 +450,15 @@ export default function ZakatScreen() {
                 <Text style={[styles.actionButtonSecondaryText, { color: theme.primary }]}>Share PDF</Text>
               </TouchableOpacity>
             </View>
+
+            <TouchableOpacity
+              style={[styles.actionButtonSecondary, { backgroundColor: theme.primary, borderColor: theme.primary, marginTop: 10 }]}
+              onPress={() => router.push('/charity' as any)}
+              activeOpacity={0.8}
+            >
+              <HeartHandshake size={18} color="#FFFFFF" />
+              <Text style={[styles.actionButtonSecondaryText, { color: '#FFFFFF', fontWeight: 'bold' }]}>Give Charity & Sadaqah</Text>
+            </TouchableOpacity>
           </View>
         )}
         
