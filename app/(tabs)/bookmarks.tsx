@@ -5,7 +5,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 
 import { Text } from '@/components/Themed';
 import { AyahCard } from '../../src/components/AyahCard';
-import { db } from '../../src/database/db';
+import { getDb } from '../../src/database/db';
 import { Ayah } from '../../src/models/types';
 import { Colors } from '../../src/theme/colors';
 
@@ -23,7 +23,7 @@ export default function BookmarksScreen() {
 
   const loadBookmarks = async () => {
     try {
-      const savedAyahs = await db.getAllAsync<Ayah>(`
+      const savedAyahs = await getDb().getAllAsync<Ayah>(`
         SELECT a.*, t.text as translation 
         FROM ayah a
         JOIN bookmark b ON a.id = b.ayah_id

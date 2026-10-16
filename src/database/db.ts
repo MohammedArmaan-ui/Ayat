@@ -23,8 +23,8 @@ export const getDb = (): SQLite.SQLiteDatabase => {
   return _db;
 };
 
-// For backward compatibility with existing imports
-export const db = (Platform.OS === 'web' && typeof window === 'undefined' ? {} : SQLite.openDatabaseSync('ayat.db')) as SQLite.SQLiteDatabase;
+// For backward compatibility with existing imports — use getDb() to avoid opening DB at module load time
+export const db = { get current() { return getDb(); } } as any;
 
 export const initDatabase = async () => {
   if (Platform.OS === 'web' && typeof window === 'undefined') return;

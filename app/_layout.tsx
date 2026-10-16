@@ -28,10 +28,19 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [dbReady, setDbReady] = useState(false);
   const [isSplashFinished, setIsSplashFinished] = useState(false);
-  const [loaded, error] = useFonts({
+  const [loaded, fontError] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font,
   });
+
+  // Consider fonts "ready" whether they loaded successfully or failed (use system fonts as fallback)
+  const fontsReady = loaded || !!fontError;
+
+  useEffect(() => {
+    if (fontError) {
+      console.error('Font loading error (using system fonts as fallback):', fontError);
+    }
+  }, [fontError]);
 
   useEffect(() => {
     async function setupAudio() {
@@ -66,20 +75,15 @@ export default function RootLayout() {
     setup();
   }, []);
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
-    if (error) throw error;
-  }, [error]);
-
-  useEffect(() => {
-    if (loaded && dbReady) {
+    if (fontsReady && dbReady) {
       SplashScreen.hideAsync().catch(() => {
         /* ignore */
       });
     }
-  }, [loaded, dbReady]);
+  }, [fontsReady, dbReady]);
 
-  if (!loaded || !dbReady) {
+  if (!fontsReady || !dbReady) {
     return (
       <View style={{ flex: 1, backgroundColor: '#064E3B', justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#ffffff" />
@@ -115,4 +119,3 @@ function RootLayoutNav() {
     </ThemeProvider>
   );
 }
-

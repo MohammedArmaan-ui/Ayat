@@ -4,7 +4,7 @@ import { Search as SearchIcon, X } from 'lucide-react-native';
 import { Stack, useRouter } from 'expo-router';
 
 import { Text } from '@/components/Themed';
-import { db } from '../src/database/db';
+import { getDb } from '../src/database/db';
 import { Ayah } from '../src/models/types';
 import { AyahCard } from '../src/components/AyahCard';
 import { Colors } from '../src/theme/colors';
@@ -27,7 +27,7 @@ export default function SearchScreen() {
 
     try {
       // Search Surahs
-      const sResults = await db.getAllAsync<any>(`
+      const sResults = await getDb().getAllAsync<any>(`
         SELECT * FROM surah 
         WHERE name_transliteration LIKE ? OR name_translation LIKE ?
         LIMIT 5
@@ -35,7 +35,7 @@ export default function SearchScreen() {
       setSurahResults(sResults);
 
       // Search Ayahs
-      const aResults = await db.getAllAsync<Ayah>(`
+      const aResults = await getDb().getAllAsync<Ayah>(`
         SELECT a.*, t.text as translation 
         FROM ayah a
         LEFT JOIN translation t ON a.id = t.ayah_id AND t.language = 'en'

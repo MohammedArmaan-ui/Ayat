@@ -1,69 +1,158 @@
-# Ayat - Premium Islamic Lifestyle App
+# Ayat - Premium Islamic Lifestyle & Worship Companion
 
-![Ayat App Logo](./assets/images/icon.png)
+<div align="center">
+  <img src="./assets/images/icon.png" alt="Ayat Logo" width="120" style="border-radius: 24px;" />
+  <br />
+  <h3>Spiritual reflection, Quran study, and daily worship — beautifully designed.</h3>
+  <p>Built with <strong>React Native</strong>, <strong>Expo SDK 54</strong>, and the <strong>New Architecture</strong>.</p>
+</div>
 
-**Ayat** is a modern, premium mobile Islamic lifestyle application built with Expo and React Native. Designed for spiritual reflection, deep study, and daily worship, it features a beautiful Emerald & Gold aesthetic inspired by classic Islamic design, combined with a seamless, high-performance user interface.
+---
 
-## ✨ Features
+## 🌟 Overview
 
-- **📖 Interactive Quran Reader**: High-quality Uthmani script with adjustable display, side-by-side translations, transliteration, and word-by-word reading modes.
-- **🔊 Audio Recitation**: Stream beautiful recitations from world-renowned Qaris with per-verse highlighting and looping.
-- **🕌 Prayer Times & Qibla**: Access accurate daily prayer times to help structure your day around worship.
-- **📿 Tasbih Counter**: A beautifully designed interactive digital tasbih with haptic feedback, session history, and multiple built-in dhikr phrases.
-- **📚 Islamic Stories**: A rich library of inspiring tales featuring the lives of Prophets (e.g., Yusuf, Musa, Muhammad PBUH) and key past events (e.g., The Battle of Badr, The Conquest of Mecca).
-- **🔖 Bookmarks & Reflections**: Save your favorite ayahs and easily navigate back to them.
-- **🔐 User Authentication**: Secure login and sign-up flow to keep your data, history, and preferences personalized.
-- **🔍 Powerful Search**: Instantly find any verse across Arabic text, transliterations, and multiple translations.
-- **🌙 Multiple Themes**: Choose between Light, Dark (Emerald), and Sepia modes for a comfortable reading experience at any time.
-- **💾 Offline First**: Built-in SQLite database ensures your bookmarks, settings, and progress are saved locally even without internet.
+**Ayat** is an all-in-one, modern Islamic lifestyle and worship companion application designed for Muslims worldwide. Inspired by timeless Islamic geometry, classical calligraphy, and an elegant **Emerald & Gold** palette, Ayat delivers a fast, offline-first, and spiritually enriching experience for daily worship, Quranic study, prayer tracking, and spiritual growth.
 
-## 🛠️ Tech Stack
+---
 
-- **Framework**: [Expo](https://expo.dev/) (SDK 54)
-- **Routing**: [Expo Router](https://docs.expo.dev/router/introduction/)
-- **Database**: [Expo SQLite](https://docs.expo.dev/versions/latest/sdk/sqlite/)
-- **Audio**: [Expo AV](https://docs.expo.dev/versions/latest/sdk/av/)
-- **Icons**: [Lucide React Native](https://lucide.dev/)
-- **Animation & Feedback**: [React Native Reanimated](https://docs.swmansion.com/react-native-reanimated/) & Expo Haptics
+## ✨ Features & Capabilities
+
+### 📖 Interactive Quran Reader
+- **Authentic Uthmani Script**: Clear, beautifully rendered Arabic typography with adjustable font sizes.
+- **Side-by-Side Translations & Transliteration**: Multiple English translations and phonetic transliteration for every verse.
+- **Audio Recitation**: Verse-by-verse recitation streaming with active highlighting and playback speed controls.
+- **Smart Verse Search**: Instant Arabic, English translation, and transliteration search across the entire Quran.
+- **Bookmarks & Notes**: Easily save and revisit favorite verses and reflections.
+
+### 🕌 Prayer Times & Spiritual Analytics
+- **Precise GPS Prayer Times**: Automated calculation of Fajr, Dhuhr, Asr, Maghrib, and Isha based on local coordinates.
+- **Prayer Log & 2-Day History**: Log prayer completions with support for retroactive check-ins up to 2 days prior.
+- **Streak & Monthly Heatmap**: Track prayer consistency with visual streak counters and monthly completion analytics.
+
+### 💰 Comprehensive Zakat Calculator
+- **Asset Categories**: Calculate Zakat on gold, silver, liquid cash, investments, business inventory, and personal savings.
+- **Nisab Thresholds**: Live or customizable gold/silver Nisab benchmarks.
+- **PDF Export & Share**: Generate clean, printable Zakat reports to share or archive.
+
+### 📿 Smart Digital Tasbih
+- **Interactive Counter**: Touch-anywhere digital beads with realistic haptic vibration and sound effects.
+- **Multiple Built-in Dhikr**: SubhanAllah, Alhamdulillah, Allahu Akbar, Astaghfirullah, and custom phrases.
+- **Target Counter & Reset**: Set custom goals (33, 99, 100, 1000) with milestone vibrations and session logs.
+
+### 📚 Islamic Stories & Prophet Biographies
+- **Rich Story Library**: Comprehensive collection covering the Lives of the Prophets, Sahabah, and pivotal moments in Islamic history.
+- **Live Search & Category Filter**: Filter stories by category (Prophets, Quranic Events, Sahabah, History) or search keywords in real time.
+- **Distraction-Free Reading**: Immersive reader layout optimized for comfortable long-form reading.
+
+### 🤲 Daily Adhkar & Duas
+- **Categorized Supplications**: Morning & Evening Adhkar, post-prayer dhikr, travel duas, and protection prayers with Arabic, transliterations, and references.
+
+### ✨ 99 Names of Allah (Asma ul-Husna)
+- **Beautiful Name Cards**: Explore the 99 attributes of Allah with Arabic calligraphy, English meanings, and spiritual explanations.
+
+### 📅 Hijri Calendar & Islamic Events
+- **Dual Calendar View**: Synchronized Hijri and Gregorian dates highlighting significant Islamic events (Ramadan, Eid, Ashura, Laylatul Qadr).
+
+### 🔐 Security & Personalization
+- **Biometric Authentication**: Fingerprint and FaceID biometric unlock for privacy and data protection.
+- **Local SQLite Engine**: All user records, bookmarks, prayer histories, and preferences stay on your device offline.
+- **Multi-Theme Support**: Emerald Dark, Clean Light, and Sepia reading themes.
+
+---
+
+## 🛠️ Architecture & Tech Stack
+
+| Component | Technology |
+|---|---|
+| **Framework** | [React Native 0.81.5](https://reactnative.dev/) via [Expo SDK 54](https://expo.dev/) |
+| **Architecture** | **New Architecture** enabled (TurboModules + Fabric) |
+| **Navigation** | [Expo Router v6](https://docs.expo.dev/router/introduction/) (File-based navigation) |
+| **Database** | [Expo SQLite](https://docs.expo.dev/versions/latest/sdk/sqlite/) (Local, offline-first) |
+| **Audio Engine** | [Expo AV](https://docs.expo.dev/versions/latest/sdk/av/) (Background playback capable) |
+| **Biometrics** | [Expo Local Authentication](https://docs.expo.dev/versions/latest/sdk/local-authentication/) |
+| **Animations** | [React Native Reanimated](https://docs.swmansion.com/react-native-reanimated/) & [Worklets](https://github.com/software-mansion/react-native-worklets) |
+| **Icons & UI** | [Lucide React Native](https://lucide.dev/) & [Expo Vector Icons](https://icons.expo.fyi/) |
+| **Language** | TypeScript with strict type checking |
+
+---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-
-- Node.js (v18 or later)
-- Expo Go app on your mobile device (to preview)
+- [Node.js](https://nodejs.org/) (v18 or later)
+- Android Studio / Android SDK (with `ANDROID_HOME` configured)
+- Physical Android device (USB Debugging enabled) or Android Emulator
 
 ### Installation
 
-1. Clone the repository:
+1. **Clone the repository**:
    ```bash
    git clone https://github.com/MohammedArmaan-ui/Ayat.git
+   cd Ayat
    ```
 
-2. Install dependencies:
+2. **Install dependencies**:
    ```bash
    npm install
    ```
 
-3. Start the development server:
-   ```bash
-   npx expo start
+3. **Configure local Android SDK** (if running natively):
+   Ensure `android/local.properties` exists with your SDK path:
+   ```properties
+   sdk.dir=C\:\\Users\\<USER>\\AppData\\Local\\Android\\Sdk
    ```
 
-4. Scan the QR code with Expo Go (Android) or the Camera app (iOS) to run the app.
+4. **Start the Metro development server**:
+   ```bash
+   npx expo start -c
+   ```
+
+5. **Run on Android**:
+   ```bash
+   npx expo run:android
+   ```
+   Or connect your physical device via USB and forward the Metro port:
+   ```bash
+   adb reverse tcp:8081 tcp:8081
+   ```
+
+---
 
 ## 📁 Project Structure
 
-- `app/`: Expo Router directory (Screens, Tabs, and Authentication Flow).
-- `src/components/`: Reusable UI widgets (AyahCard, AudioController, etc.).
-- `src/services/`: Business logic (Quran data, Audio, Storage, Settings, Auth).
-- `src/constants/`: Mock data and static content (e.g., Islamic Stories).
-- `src/database/`: SQLite initialization and migrations.
-- `src/theme/`: Color palettes and styling constants.
-
-## 📝 License
-
-This project is for educational and spiritual benefit. Please respect the Quranic content and Islamic etiquettes when using or modifying this application.
+```text
+Ayat/
+├── app/                      # Expo Router screens and navigation flows
+│   ├── (tabs)/               # Bottom tab navigation (Home, Reader, Prayer, Stories, Zakat, etc.)
+│   │   ├── bookmarks.tsx     # Bookmarked Ayahs & reflections
+│   │   ├── prayer.tsx        # Prayer times, tracker, streak & monthly heatmap
+│   │   ├── reader.tsx        # Quran reader screen with audio player
+│   │   ├── stories.tsx       # Islamic stories with search & filters
+│   │   ├── tasbih.tsx        # Interactive digital dhikr counter
+│   │   └── zakat.tsx         # Comprehensive Zakat calculator & PDF export
+│   ├── adhkar.tsx            # Daily Adhkar and supplications
+│   ├── calendar.tsx          # Hijri / Gregorian Islamic calendar
+│   ├── names-of-allah.tsx    # 99 Names of Allah browser
+│   ├── search.tsx            # Full Quran verse search
+│   └── _layout.tsx           # Root navigation, theme & database initializer
+├── assets/                   # Fonts, icons, images, and brand assets
+├── src/
+│   ├── components/           # Reusable UI widgets (AyahCard, AudioController, Splash, etc.)
+│   ├── constants/            # Curated data (Stories, Names of Allah, Adhkar, Surah metadata)
+│   ├── database/             # SQLite schema, migrations, and lazy connection handlers
+│   ├── services/             # Core services (Auth, Audio, Prayer, Quran, Settings, Zakat)
+│   └── theme/                # Emerald & Gold color palettes, typography, and styling
+└── android/                  # Native Android project configuration (Gradle 8.14, Kotlin 2.1)
+```
 
 ---
-Created with ❤️ by Mohammed Armaan
+
+## 📄 License & Etiquette
+
+This project is built for spiritual reflection and educational benefit. When contributing or utilizing Quranic texts, please ensure translations, Arabic scripts, and recitation assets are treated with utmost reverence.
+
+---
+
+<div align="center">
+  Crafted with care and devotion by <strong>Mohammed Armaan</strong> 🌙
+</div>
