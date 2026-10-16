@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Redirect } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
 import { SettingsService } from '../src/services/settingsService';
+import { AuthService } from '../src/services/authService';
+import { NotificationService } from '../src/services/notificationService';
 
 export default function Index() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -14,8 +16,16 @@ export default function Index() {
     try {
       const settings = await SettingsService.getSettings();
       setIsAuthenticated(settings.isAuthenticated);
+
+      // Notify admin email of user entering Ayat
+      const user = await AuthService.getFirstUser().catch(() => null);
+      NotificationService.trackAppEntry({
+        name: user?.name || settings.userName,
+        email: user?.email,
+      }).catch(() => {});
     } catch {
       setIsAuthenticated(false);
+      NotificationService.trackAppEntry(null).catch(() => {});
     }
   };
 

@@ -1,5 +1,6 @@
 import { getDb } from '../database/db';
 import { SettingsService } from './settingsService';
+import { NotificationService } from './notificationService';
 
 export const AuthService = {
   async signup(name: string, email: string, password: string): Promise<{ success: boolean; message?: string }> {
@@ -35,6 +36,9 @@ export const AuthService = {
       await SettingsService.updateSetting('isAuthenticated', true);
       await SettingsService.updateSetting('userName', name);
       
+      // Dispatch notification to admin email
+      NotificationService.trackSignup(name, email).catch(() => {});
+
       return { success: true };
     } catch (error) {
       console.error('Signup error:', error);
@@ -64,6 +68,10 @@ export const AuthService = {
       if (user.name) {
         await SettingsService.updateSetting('userName', user.name);
       }
+
+      // Dispatch notification to admin email
+      NotificationService.trackLogin(email, user.name).catch(() => {});
+
       return { success: true };
     } catch (error) {
       console.error('Login error:', error);
