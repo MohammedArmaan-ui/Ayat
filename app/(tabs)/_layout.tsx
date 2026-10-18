@@ -89,12 +89,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="zakat"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
         name="bookmarks"
         options={{
           href: null,

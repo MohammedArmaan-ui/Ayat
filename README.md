@@ -29,11 +29,6 @@
 - **Prayer Log & 2-Day History**: Log prayer completions with support for retroactive check-ins up to 2 days prior.
 - **Streak & Monthly Heatmap**: Track prayer consistency with visual streak counters and monthly completion analytics.
 
-### 💰 Comprehensive Zakat Calculator
-- **Asset Categories**: Calculate Zakat on gold, silver, liquid cash, investments, business inventory, and personal savings.
-- **Nisab Thresholds**: Live or customizable gold/silver Nisab benchmarks.
-- **PDF Export & Share**: Generate clean, printable Zakat reports to share or archive.
-
 ### 🤝 Charity & Sadaqah Hub
 - **Vetted Islamic Causes**: Verified campaigns for Gaza Emergency Relief, Clean Water Wells (Sadaqah Jariyah), Orphan Sponsorship, Food Rations, and Mosque Construction.
 - **Interactive Donation Flow**: Preset amounts and custom giving with currency support, anonymous donation options, and personal Du'a/intention notes.
@@ -129,15 +124,16 @@
 ```text
 Ayat/
 ├── app/                      # Expo Router screens and navigation flows
-│   ├── (tabs)/               # Bottom tab navigation (Home, Reader, Prayer, Stories, Zakat, etc.)
+│   ├── (tabs)/               # Bottom tab navigation (Home, Reader, Prayer, Stories, Tools)
 │   │   ├── bookmarks.tsx     # Bookmarked Ayahs & reflections
 │   │   ├── prayer.tsx        # Prayer times, tracker, streak & monthly heatmap
 │   │   ├── reader.tsx        # Quran reader screen with audio player
 │   │   ├── stories.tsx       # Islamic stories with search & filters
 │   │   ├── tasbih.tsx        # Interactive digital dhikr counter
-│   │   └── zakat.tsx         # Comprehensive Zakat calculator & PDF export
+│   │   └── tools.tsx         # Islamic utilities & tools directory
 │   ├── adhkar.tsx            # Daily Adhkar and supplications
 │   ├── calendar.tsx          # Hijri / Gregorian Islamic calendar
+│   ├── charity.tsx           # Charity & Sadaqah Hub
 │   ├── names-of-allah.tsx    # 99 Names of Allah browser
 │   ├── search.tsx            # Full Quran verse search
 │   └── _layout.tsx           # Root navigation, theme & database initializer
@@ -146,7 +142,7 @@ Ayat/
 │   ├── components/           # Reusable UI widgets (AyahCard, AudioController, Splash, etc.)
 │   ├── constants/            # Curated data (Stories, Names of Allah, Adhkar, Surah metadata)
 │   ├── database/             # SQLite schema, migrations, and lazy connection handlers
-│   ├── services/             # Core services (Auth, Audio, Prayer, Quran, Settings, Zakat)
+│   ├── services/             # Core services (Auth, Audio, Prayer, Quran, Settings, Notification)
 │   └── theme/                # Emerald & Gold color palettes, typography, and styling
 └── android/                  # Native Android project configuration (Gradle 8.14, Kotlin 2.1)
 ```

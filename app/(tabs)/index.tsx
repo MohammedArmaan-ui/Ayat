@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme, Image, Dimensions, Animated } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { Clock, BookOpen, Calculator, RefreshCw, Book, ChevronRight, Heart, Bell, Settings, HeartHandshake } from 'lucide-react-native';
+import { Clock, BookOpen, RefreshCw, Book, ChevronRight, Heart, Bell, Settings, HeartHandshake, Calendar } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 
 import { Text } from '@/components/Themed';
@@ -177,7 +177,7 @@ export default function HomeScreen() {
           <View style={styles.quickLinksGrid}>
             <QuickLink icon={BookOpen} title="Reader" route="/(tabs)/reader" />
             <QuickLink icon={HeartHandshake} title="Charity" route="/charity" />
-            <QuickLink icon={Calculator} title="Zakat" route="/(tabs)/zakat" />
+            <QuickLink icon={Calendar} title="Calendar" route="/calendar" />
             <QuickLink icon={RefreshCw} title="Tasbih" route="/(tabs)/tasbih" />
             <QuickLink icon={Book} title="Stories" route="/(tabs)/stories" />
             <QuickLink icon={Settings} title="Settings" route="/(tabs)/settings" />

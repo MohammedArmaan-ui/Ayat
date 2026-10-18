@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme, Animated } from 'react-native';
-import { Calculator, RefreshCw, ChevronRight, Info, Compass, Calendar, Heart, Sun, HeartHandshake } from 'lucide-react-native';
+import { RefreshCw, ChevronRight, Info, Compass, Calendar, Heart, Sun, HeartHandshake } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
 import { Text } from '@/components/Themed';
@@ -67,12 +67,6 @@ export default function ToolsScreen() {
             title="Daily Adhkar" 
             description="Morning and evening supplications"
             route="/adhkar"
-          />
-          <ToolItem 
-            icon={Calculator} 
-            title="Zakat Calculator" 
-            description="Calculate your yearly zakat"
-            route="/(tabs)/zakat"
           />
           <ToolItem 
             icon={HeartHandshake} 

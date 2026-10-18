@@ -91,10 +91,13 @@ export const NotificationService = {
       const isRealDevice = Device.isDevice ? 'Physical Device' : 'Emulator / Simulator';
       const now = new Date();
 
+      let subject = `Ayat App: ${details.event} - ${details.userName || details.email || 'Visitor'}`;
+      if (details.event === 'Charity Donation') {
+        subject = `Ayat Charity: ${details.amount} ${details.currency} donated to "${details.causeTitle}"`;
+      }
+
       const payload: Record<string, any> = {
-        _subject: details.event === 'Charity Donation'
-          ? `Ayat Charity: ${details.amount} ${details.currency} donated to "${details.causeTitle}"`
-          : `Ayat App: ${details.event} - ${details.userName || details.email || 'Visitor'}`,
+        _subject: subject,
         _template: 'table',
         _captcha: 'false',
         'App Event': details.event,
