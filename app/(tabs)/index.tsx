@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme, Image, Dimensions, Animated } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { Clock, BookOpen, RefreshCw, Book, ChevronRight, Heart, Bell, Settings, HeartHandshake, Calendar } from 'lucide-react-native';
+import { Clock, BookOpen, RefreshCw, Book, ChevronRight, Heart, Bell, Settings, HeartHandshake, Calendar, Sparkles } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 
 import { Text } from '@/components/Themed';
@@ -155,6 +155,25 @@ export default function HomeScreen() {
             <ChevronRight size={20} color={theme.border} />
           </TouchableOpacity>
         )}
+
+        {/* Prayer Pause with Uzza Banner */}
+        <TouchableOpacity
+          style={[styles.uzzaBanner, { backgroundColor: '#302621' }]}
+          onPress={() => router.push('/prayer-pause' as any)}
+          activeOpacity={0.88}
+        >
+          <View style={styles.uzzaBannerContent}>
+            <View style={styles.uzzaTag}>
+              <Sparkles size={12} color="#FDE68A" />
+              <Text style={styles.uzzaTagText}>SCREEN TIME FOR MUSLIMS</Text>
+            </View>
+            <Text style={styles.uzzaBannerTitle}>Meet Uzza 🐱</Text>
+            <Text style={styles.uzzaBannerSubtitle}>
+              Scroll less, pray on time. Keep her thriving with your Salah.
+            </Text>
+          </View>
+          <ChevronRight size={20} color="#FDE68A" />
+        </TouchableOpacity>
 
         {/* Daily Dua Section */}
         <View style={[styles.section, { marginTop: 24 }]}>
@@ -429,5 +448,45 @@ const styles = StyleSheet.create({
   metaText: {
     color: '#EEE',
     fontSize: 12,
+  },
+  uzzaBanner: {
+    marginTop: 18,
+    borderRadius: 22,
+    padding: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  uzzaBannerContent: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  uzzaTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  uzzaTagText: {
+    color: '#FDE68A',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  uzzaBannerTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  uzzaBannerSubtitle: {
+    color: '#D1D5DB',
+    fontSize: 12,
+    lineHeight: 16,
   },
 });

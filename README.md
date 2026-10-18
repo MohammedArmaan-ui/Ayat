@@ -29,6 +29,13 @@
 - **Prayer Log & 2-Day History**: Log prayer completions with support for retroactive check-ins up to 2 days prior.
 - **Streak & Monthly Heatmap**: Track prayer consistency with visual streak counters and monthly completion analytics.
 
+### 🐾 Prayer Pause — Meet Uzza the Cat (Screen Time for Muslims)
+- **Interactive Cat Companion**: Uzza's mood and vitality react directly to your daily Salah completions and screen time habits.
+- **6 Dynamic Emotional States**: *Thriving, Content, Tired, Struggling, Exhausted,* and *Collapsed*.
+- **Salah Focus Mode**: Automatically locks distracting apps (Instagram, TikTok, YouTube, etc.) 15 minutes before and after prayer times.
+- **Proof Mode ("Pray to Unlock")**: Complete your prayer and scan your prayer mat to unlock apps, or confirm with Honor Mode.
+- **Brick Mode**: Maximum digital detox for deep worship and Quran recitation.
+
 ### 🤝 Charity & Sadaqah Hub
 - **Vetted Islamic Causes**: Verified campaigns for Gaza Emergency Relief, Clean Water Wells (Sadaqah Jariyah), Orphan Sponsorship, Food Rations, and Mosque Construction.
 - **Interactive Donation Flow**: Preset amounts and custom giving with currency support, anonymous donation options, and personal Du'a/intention notes.
@@ -140,14 +147,15 @@ Ayat/
 │   ├── charity.tsx           # Charity & Sadaqah Hub
 │   ├── customer-care.tsx     # Customer Care & User Support inquiry screen
 │   ├── names-of-allah.tsx    # 99 Names of Allah browser
+│   ├── prayer-pause.tsx      # Screen Time for Muslims (featuring Uzza the cat)
 │   ├── search.tsx            # Full Quran verse search
 │   └── _layout.tsx           # Root navigation, theme & database initializer
 ├── assets/                   # Fonts, icons, images, and brand assets
 ├── src/
-│   ├── components/           # Reusable UI widgets (AyahCard, AudioController, Splash, etc.)
+│   ├── components/           # Reusable UI widgets (UzzaCat, AyahCard, AudioController, Splash, etc.)
 │   ├── constants/            # Curated data (Stories, Names of Allah, Adhkar, Surah metadata)
 │   ├── database/             # SQLite schema, migrations, and lazy connection handlers
-│   ├── services/             # Core services (Auth, Audio, Prayer, Quran, Settings, Notification)
+│   ├── services/             # Core services (Auth, Audio, Prayer, Quran, Settings, PrayerPause, Notification)
 │   └── theme/                # Emerald & Gold color palettes, typography, and styling
 └── android/                  # Native Android project configuration (Gradle 8.14, Kotlin 2.1)
 ```

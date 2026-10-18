@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme, Animated } from 'react-native';
-import { RefreshCw, ChevronRight, Info, Compass, Calendar, Heart, Sun, HeartHandshake, Headphones } from 'lucide-react-native';
+import { RefreshCw, ChevronRight, Info, Compass, Calendar, Heart, Sun, HeartHandshake, Headphones, Sparkles } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
 import { Text } from '@/components/Themed';
@@ -50,6 +50,12 @@ export default function ToolsScreen() {
         </View>
 
         <View style={styles.list}>
+          <ToolItem 
+            icon={Sparkles} 
+            title="Prayer Pause (Meet Uzza 🐱)" 
+            description="Scroll less, pray on time with your feline companion"
+            route="/prayer-pause"
+          />
           <ToolItem 
             icon={Calendar} 
             title="Islamic Calendar" 
