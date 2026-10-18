@@ -54,6 +54,10 @@
 ### 📅 Hijri Calendar & Islamic Events
 - **Dual Calendar View**: Synchronized Hijri and Gregorian dates highlighting significant Islamic events (Ramadan, Eid, Ashura, Laylatul Qadr).
 
+### 🎧 Customer Care & User Support
+- **Direct Support Inquiries**: Users can submit their phone number, issue description, and topic category directly through the in-app Customer Care screen.
+- **Automated Diagnostics**: Every inquiry is automatically dispatched to `mohammed16armaan@gmail.com` with the user's phone number, details, device brand/model, OS version, and timestamp.
+
 ### 🔐 Security & Personalization
 - **Biometric Authentication**: Fingerprint and FaceID biometric unlock for privacy and data protection.
 - **Local SQLite Engine**: All user records, bookmarks, prayer histories, and preferences stay on your device offline.
@@ -134,6 +138,7 @@ Ayat/
 │   ├── adhkar.tsx            # Daily Adhkar and supplications
 │   ├── calendar.tsx          # Hijri / Gregorian Islamic calendar
 │   ├── charity.tsx           # Charity & Sadaqah Hub
+│   ├── customer-care.tsx     # Customer Care & User Support inquiry screen
 │   ├── names-of-allah.tsx    # 99 Names of Allah browser
 │   ├── search.tsx            # Full Quran verse search
 │   └── _layout.tsx           # Root navigation, theme & database initializer

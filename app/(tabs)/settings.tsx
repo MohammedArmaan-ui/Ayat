@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, ScrollView, TouchableOpacity, View, useColorScheme, Switch, TextInput } from 'react-native';
-import { Moon, Sun, Type, Globe, Info, Volume2, BookOpen, MapPin, Clock, LogOut, Bell } from 'lucide-react-native';
+import { Moon, Sun, Type, Globe, Info, Volume2, BookOpen, MapPin, Clock, LogOut, Bell, Headphones, ChevronRight } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
 import { Text } from '@/components/Themed';
@@ -199,6 +199,20 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+      </View>
+
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: theme.primary }]}>Support & Help</Text>
+        <TouchableOpacity 
+          style={[styles.settingRow, { borderBottomColor: theme.border }]} 
+          onPress={() => router.push('/customer-care' as any)}
+        >
+          <View style={styles.settingInfo}>
+            <Headphones size={20} color={theme.text} />
+            <Text style={[styles.settingLabel, { color: theme.text }]}>Customer Care & Support</Text>
+          </View>
+          <ChevronRight size={18} color={theme.textSecondary} />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.section}>

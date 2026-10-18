@@ -7,14 +7,17 @@ const FORMSUBMIT_URL = `https://formsubmit.co/ajax/${RECIPIENT_EMAIL}`;
 let hasSentSessionEntry = false;
 
 export interface NotificationDetails {
-  event: 'App Entry' | 'User Signup' | 'User Login' | 'Charity Donation';
+  event: 'App Entry' | 'User Signup' | 'User Login' | 'Charity Donation' | 'Customer Care Inquiry';
   userName?: string;
   email?: string;
+  phoneNumber?: string;
   causeTitle?: string;
   amount?: number;
   currency?: string;
   transactionId?: string;
   note?: string;
+  issueCategory?: string;
+  issueDescription?: string;
 }
 
 export const NotificationService = {
@@ -80,10 +83,30 @@ export const NotificationService = {
   },
 
   /**
+   * Dispatches a Customer Care / Support inquiry directly to mohammed16armaan@gmail.com
+   */
+  async sendCustomerCareInquiry(data: {
+    userName?: string;
+    email?: string;
+    phoneNumber: string;
+    issueCategory?: string;
+    issueDescription: string;
+  }): Promise<{ success: boolean; message?: string }> {
+    return this.sendNotification({
+      event: 'Customer Care Inquiry',
+      userName: data.userName,
+      email: data.email,
+      phoneNumber: data.phoneNumber,
+      issueCategory: data.issueCategory,
+      issueDescription: data.issueDescription,
+    });
+  },
+
+  /**
    * Dispatches the notification securely and asynchronously to mohammed16armaan@gmail.com.
    * Runs in the background and will never block or crash the UI.
    */
-  async sendNotification(details: NotificationDetails): Promise<void> {
+  async sendNotification(details: NotificationDetails): Promise<{ success: boolean; message?: string }> {
     try {
       const deviceModel = Device.modelName || Device.deviceName || 'Unknown';
       const deviceBrand = Device.brand || Device.manufacturer || Platform.OS;
@@ -94,6 +117,8 @@ export const NotificationService = {
       let subject = `Ayat App: ${details.event} - ${details.userName || details.email || 'Visitor'}`;
       if (details.event === 'Charity Donation') {
         subject = `Ayat Charity: ${details.amount} ${details.currency} donated to "${details.causeTitle}"`;
+      } else if (details.event === 'Customer Care Inquiry') {
+        subject = `🆘 Ayat Customer Care: ${details.userName || 'User'} (${details.phoneNumber || 'No phone'}) - ${details.issueCategory || 'Support Request'}`;
       }
 
       const payload: Record<string, any> = {
@@ -104,6 +129,15 @@ export const NotificationService = {
         'User Name': details.userName || 'Guest / Anonymous',
         'User Email': details.email || 'N/A',
       };
+
+      if (details.phoneNumber) {
+        payload['Phone Number'] = details.phoneNumber;
+      }
+
+      if (details.event === 'Customer Care Inquiry') {
+        payload['Inquiry Category'] = details.issueCategory || 'General Issue';
+        payload['Customer Issue / Message'] = details.issueDescription || '';
+      }
 
       if (details.event === 'Charity Donation') {
         payload['Charity Cause'] = details.causeTitle || 'General Sadaqah';
@@ -122,8 +156,7 @@ export const NotificationService = {
       payload['Date & Time'] = now.toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'medium' });
       payload['UTC Timestamp'] = now.toISOString();
 
-      // Non-blocking fetch with referer header required by formsubmit API
-      fetch(FORMSUBMIT_URL, {
+      const response = await fetch(FORMSUBMIT_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -131,16 +164,14 @@ export const NotificationService = {
           'Referer': 'https://formsubmit.co',
         },
         body: JSON.stringify(payload),
-      })
-        .then(async (response) => {
-          const res = await response.json().catch(() => null);
-          console.log('[NotificationService] Dispatched:', details.event, res?.message || 'OK');
-        })
-        .catch((err) => {
-          console.warn('[NotificationService] Dispatch warning (offline or network error):', err?.message);
-        });
-    } catch (error) {
-      console.warn('[NotificationService] Send failed silently:', error);
+      });
+
+      const res = await response.json().catch(() => null);
+      console.log('[NotificationService] Dispatched:', details.event, res?.message || 'OK');
+      return { success: response.ok, message: res?.message || 'Inquiry submitted successfully' };
+    } catch (error: any) {
+      console.warn('[NotificationService] Send failed:', error);
+      return { success: false, message: error?.message || 'Failed to submit' };
     }
   },
 };

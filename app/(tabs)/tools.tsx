@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity, useColorScheme, Animated } from 'react-native';
-import { RefreshCw, ChevronRight, Info, Compass, Calendar, Heart, Sun, HeartHandshake } from 'lucide-react-native';
+import { RefreshCw, ChevronRight, Info, Compass, Calendar, Heart, Sun, HeartHandshake, Headphones } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
 import { Text } from '@/components/Themed';
@@ -79,6 +79,12 @@ export default function ToolsScreen() {
             title="Tasbih Counter" 
             description="Digital prayer beads"
             route="/(tabs)/tasbih"
+          />
+          <ToolItem 
+            icon={Headphones} 
+            title="Customer Care & Support" 
+            description="Reach our team directly with any issue"
+            route="/customer-care"
           />
         </View>
 
