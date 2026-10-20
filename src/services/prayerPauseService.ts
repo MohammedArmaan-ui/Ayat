@@ -1,7 +1,7 @@
 import { getDb } from '../database/db';
-import { PrayerService } from './prayerService';
+import { PrayerService, PrayerData } from './prayerService';
 
-export type UzzaMood = 'Thriving' | 'Content' | 'Tired' | 'Struggling' | 'Exhausted' | 'Collapsed';
+export type UzzaMood = 'Thriving' | 'Content' | 'Peaceful' | 'Reminding' | 'Sad' | 'Angry';
 
 export interface PrayerPauseSettings {
   salahFocusEnabled: boolean;
@@ -12,14 +12,33 @@ export interface PrayerPauseSettings {
   focusMinutesToday: number;
 }
 
+export interface SalahEvaluation {
+  mood: UzzaMood;
+  vitality: number;
+  currentPrayerDue: string | null;
+  missedPrayers: string[];
+  completedPrayers: string[];
+  totalCompleted: number;
+  title: string;
+  subtitle: string;
+  themeColor: string;
+}
+
 export const DEFAULT_PAUSE_SETTINGS: PrayerPauseSettings = {
   salahFocusEnabled: true,
   brickModeEnabled: false,
   unlockMode: 'honor',
-  screenTimeMinutes: 102, // 1h 42m
+  screenTimeMinutes: 102,
   appOpens: 8,
   focusMinutesToday: 45,
 };
+
+function parseTimeToMinutes(t: string | undefined): number {
+  if (!t) return 0;
+  const clean = t.split(' ')[0];
+  const [h, m] = clean.split(':').map(Number);
+  return (h || 0) * 60 + (m || 0);
+}
 
 export const PrayerPauseService = {
   /**
@@ -111,74 +130,228 @@ export const PrayerPauseService = {
   },
 
   /**
-   * Calculates Uzza's health score (0% to 100%) and mood based on completed prayers and screen time.
+   * Evaluates Uzza's emotion and vitality dynamically based on how the user prays their Salah!
    */
-  calculateVitality(prayersCompleted: number, screenTimeMins: number): { vitality: number; mood: UzzaMood } {
-    // 5 prayers = up to 80 points (16 points per prayer)
-    const prayerPoints = Math.min(5, Math.max(0, prayersCompleted)) * 16;
-    
-    // Low screen time bonus = up to 20 points
-    // <= 60 mins = 20 pts, 120 mins = 14 pts, 180 mins = 8 pts, > 240 mins = 2 pts
-    let screenBonus = 20;
-    if (screenTimeMins > 240) screenBonus = 2;
-    else if (screenTimeMins > 180) screenBonus = 8;
-    else if (screenTimeMins > 120) screenBonus = 14;
-    else if (screenTimeMins > 60) screenBonus = 18;
+  evaluateSalahStatus(
+    timings: PrayerData['timings'] | null,
+    trackedPrayers: Record<string, boolean>,
+    now: Date = new Date()
+  ): SalahEvaluation {
+    const currentMins = now.getHours() * 60 + now.getMinutes();
 
-    const total = Math.min(100, Math.max(5, prayerPoints + screenBonus));
+    // Default fallback times if timings are still loading
+    const defaultTimings = {
+      Fajr: '05:15',
+      Sunrise: '06:30',
+      Dhuhr: '12:30',
+      Asr: '15:45',
+      Maghrib: '18:15',
+      Isha: '19:45',
+    };
+
+    const t = timings || defaultTimings;
+    const fajr = parseTimeToMinutes(t.Fajr);
+    const sunrise = parseTimeToMinutes(t.Sunrise);
+    const dhuhr = parseTimeToMinutes(t.Dhuhr);
+    const asr = parseTimeToMinutes(t.Asr);
+    const maghrib = parseTimeToMinutes(t.Maghrib);
+    const isha = parseTimeToMinutes(t.Isha);
+
+    const prayers = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+    const completedPrayers = prayers.filter(p => !!trackedPrayers[p]);
+    const totalCompleted = completedPrayers.length;
+
+    const missedPrayers: string[] = [];
+    let currentPrayerDue: string | null = null;
+    let minutesRemainingInWindow = 999;
+
+    // 1. Check Fajr
+    if (currentMins >= fajr) {
+      if (currentMins < sunrise) {
+        if (!trackedPrayers['Fajr']) {
+          currentPrayerDue = 'Fajr';
+          minutesRemainingInWindow = sunrise - currentMins;
+        }
+      } else {
+        if (!trackedPrayers['Fajr']) missedPrayers.push('Fajr');
+      }
+    }
+
+    // 2. Check Dhuhr
+    if (currentMins >= dhuhr) {
+      if (currentMins < asr) {
+        if (!trackedPrayers['Dhuhr']) {
+          currentPrayerDue = 'Dhuhr';
+          minutesRemainingInWindow = asr - currentMins;
+        }
+      } else {
+        if (!trackedPrayers['Dhuhr']) missedPrayers.push('Dhuhr');
+      }
+    }
+
+    // 3. Check Asr
+    if (currentMins >= asr) {
+      if (currentMins < maghrib) {
+        if (!trackedPrayers['Asr']) {
+          currentPrayerDue = 'Asr';
+          minutesRemainingInWindow = maghrib - currentMins;
+        }
+      } else {
+        if (!trackedPrayers['Asr']) missedPrayers.push('Asr');
+      }
+    }
+
+    // 4. Check Maghrib
+    if (currentMins >= maghrib) {
+      if (currentMins < isha) {
+        if (!trackedPrayers['Maghrib']) {
+          currentPrayerDue = 'Maghrib';
+          minutesRemainingInWindow = isha - currentMins;
+        }
+      } else {
+        if (!trackedPrayers['Maghrib']) missedPrayers.push('Maghrib');
+      }
+    }
+
+    // 5. Check Isha
+    if (currentMins >= isha) {
+      if (!trackedPrayers['Isha']) {
+        currentPrayerDue = 'Isha';
+        minutesRemainingInWindow = (24 * 60) - currentMins;
+      }
+    }
+
+    // -------------------------------------------------------------
+    // DETERMINE UZZA'S EMOTION BASED ON USER'S SALAH PERFORMANCE:
+    // -------------------------------------------------------------
+
+    // SCENARIO 1: Missed a prayer -> ANGRY / HISSING 😾
+    if (missedPrayers.length > 0) {
+      const vitality = Math.max(8, 40 - missedPrayers.length * 15);
+      const names = missedPrayers.join(', ');
+      return {
+        mood: 'Angry',
+        vitality,
+        currentPrayerDue,
+        missedPrayers,
+        completedPrayers,
+        totalCompleted,
+        title: `Uzza is Upset! ${names} was missed ⚡`,
+        subtitle: `Never abandon your Salah. Make Qada immediately and seek Allah's forgiveness.`,
+        themeColor: '#EF4444',
+      };
+    }
+
+    // SCENARIO 2: Current prayer is due and running out of time -> SAD / STRUGGLING 😿
+    if (currentPrayerDue && minutesRemainingInWindow <= 35) {
+      return {
+        mood: 'Sad',
+        vitality: 32,
+        currentPrayerDue,
+        missedPrayers,
+        completedPrayers,
+        totalCompleted,
+        title: `${currentPrayerDue} is ending soon! 😿`,
+        subtitle: `Only ${minutesRemainingInWindow}m left! Put the phone down and stand before Allah.`,
+        themeColor: '#F59E0B',
+      };
+    }
+
+    // SCENARIO 3: Current prayer is due right now -> REMINDING / PLEADING 🥺
+    if (currentPrayerDue) {
+      return {
+        mood: 'Reminding',
+        vitality: 58,
+        currentPrayerDue,
+        missedPrayers,
+        completedPrayers,
+        totalCompleted,
+        title: `Hayya 'ala-s-Salah! It's time for ${currentPrayerDue} 🥺`,
+        subtitle: `Uzza is looking up pleadingly. Perform Wudu and offer your prayer on time.`,
+        themeColor: '#D97706',
+      };
+    }
+
+    // SCENARIO 4: All 5 prayers of the day completed -> THRIVING / OVERJOYED 🌸
+    if (totalCompleted === 5) {
+      return {
+        mood: 'Thriving',
+        vitality: 100,
+        currentPrayerDue: null,
+        missedPrayers,
+        completedPrayers,
+        totalCompleted,
+        title: `All 5 Prayers Completed! MashaAllah 🌸`,
+        subtitle: `Uzza is thriving, purring, and overjoyed! Your spiritual light is shining bright.`,
+        themeColor: '#10B981',
+      };
+    }
+
+    // SCENARIO 5: All due prayers so far are prayed -> CONTENT or PEACEFUL
+    // If night or late between prayers: Peaceful (curled asleep)
+    // If during the active day: Content (sitting upright, purring)
+    const isLateNight = currentMins > 22 * 60 || currentMins < fajr;
+    if (isLateNight || totalCompleted >= 3) {
+      return {
+        mood: 'Peaceful',
+        vitality: Math.min(95, 60 + totalCompleted * 8),
+        currentPrayerDue: null,
+        missedPrayers,
+        completedPrayers,
+        totalCompleted,
+        title: `At Peace in the Remembrance of Allah 🌙`,
+        subtitle: `All current prayers are prayed. Uzza is curled up resting peacefully.`,
+        themeColor: '#3B82F6',
+      };
+    }
 
     return {
-      vitality: total,
-      mood: this.getMoodForVitality(total),
+      mood: 'Content',
+      vitality: Math.min(90, 50 + totalCompleted * 10),
+      currentPrayerDue: null,
+      missedPrayers,
+      completedPrayers,
+      totalCompleted,
+      title: `On-Time & Purring Contentedly 🌿`,
+      subtitle: `Alhamdulillah! You prayed on time. Uzza is happy and purring at your side.`,
+      themeColor: '#10B981',
     };
   },
 
   /**
-   * Maps a numerical vitality percentage to Uzza's character state.
-   */
-  getMoodForVitality(vitality: number): UzzaMood {
-    if (vitality >= 90) return 'Thriving';
-    if (vitality >= 70) return 'Content';
-    if (vitality >= 50) return 'Tired';
-    if (vitality >= 30) return 'Struggling';
-    if (vitality >= 10) return 'Exhausted';
-    return 'Collapsed';
-  },
-
-  /**
-   * Returns a friendly Islamic motivational quote for each mood state.
+   * Returns metadata for manual testing or preview.
    */
   getMoodQuote(mood: UzzaMood): { title: string; subtitle: string } {
     switch (mood) {
       case 'Thriving':
         return {
-          title: 'Uzza is Thriving & Purring! 🌸',
-          subtitle: 'MashaAllah! Your prayers are on time and your digital focus is strong.',
+          title: 'Uzza is Thriving & Overjoyed! 🌸',
+          subtitle: 'MashaAllah! All your prayers are fulfilled and on time.',
         };
       case 'Content':
         return {
-          title: 'Uzza is Content & Peaceful 🌿',
-          subtitle: 'Good balance today. Keep up your dhikr and stay mindful of the next Salah.',
+          title: 'Uzza is Content & Purring 🌿',
+          subtitle: 'You offered your prayer on time. Heart at peace.',
         };
-      case 'Tired':
+      case 'Peaceful':
         return {
-          title: 'Uzza feels a bit sleepy 🥱',
-          subtitle: 'Screen time is creeping up. Take a deep breath and prepare for the next prayer.',
+          title: 'Uzza is Resting Peacefully 🌙',
+          subtitle: 'Cozy and relaxed between prayers in remembrance of Allah.',
         };
-      case 'Struggling':
+      case 'Reminding':
         return {
-          title: 'Uzza is struggling with screen time 🍂',
-          subtitle: 'Put the phone down, make fresh Wudu, and recharge your soul.',
+          title: 'Hayya \'ala-s-Salah! Prayer is Due 🥺',
+          subtitle: 'Uzza is looking up pleadingly — take your prayer pause now.',
         };
-      case 'Exhausted':
+      case 'Sad':
         return {
-          title: 'Uzza is exhausted 🥀',
-          subtitle: 'Heavy scrolling drains spiritual energy. Pray your missed Salah to revive her.',
+          title: 'Uzza is Getting Sad & Worried 😿',
+          subtitle: 'Prayer time is slipping away! Please do not delay your Salah.',
         };
-      case 'Collapsed':
+      case 'Angry':
         return {
-          title: 'Uzza has collapsed 💔',
-          subtitle: 'Urgent pause needed! Lock your apps and turn your heart back to Allah.',
+          title: 'Uzza is Upset & Hissing! ⚡',
+          subtitle: 'A prayer was missed! Turn to Allah and make Qada immediately.',
         };
     }
   },

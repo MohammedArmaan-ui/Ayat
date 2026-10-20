@@ -24,27 +24,38 @@ import {
   Heart,
   Sparkles,
   RefreshCw,
-  Sliders,
   X,
-  Plus,
+  Check,
+  AlertTriangle,
+  Flame,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 import { Text } from '@/components/Themed';
 import { Colors } from '../src/theme/colors';
 import { SettingsService, AppSettings } from '../src/services/settingsService';
-import { PrayerService } from '../src/services/prayerService';
+import { PrayerService, PrayerData } from '../src/services/prayerService';
 import {
   PrayerPauseService,
   UzzaMood,
   PrayerPauseSettings,
+  SalahEvaluation,
   DEFAULT_PAUSE_SETTINGS,
 } from '../src/services/prayerPauseService';
 import { UzzaCat } from '../src/components/UzzaCat';
 
 const { width } = Dimensions.get('window');
 
-const MOODS: UzzaMood[] = ['Thriving', 'Content', 'Tired', 'Struggling', 'Exhausted', 'Collapsed'];
+const MOODS: { key: UzzaMood; label: string; icon: string }[] = [
+  { key: 'Thriving', label: 'Thriving', icon: '🌸' },
+  { key: 'Content', label: 'Content', icon: '🌿' },
+  { key: 'Peaceful', label: 'Peaceful', icon: '🌙' },
+  { key: 'Reminding', label: 'Reminding', icon: '🥺' },
+  { key: 'Sad', label: 'Sad', icon: '😿' },
+  { key: 'Angry', label: 'Angry', icon: '⚡' },
+];
+
+const PRAYER_NAMES = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
 interface AppOffender {
   id: string;
@@ -69,15 +80,21 @@ export default function PrayerPauseScreen() {
 
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [pauseSettings, setPauseSettings] = useState<PrayerPauseSettings>(DEFAULT_PAUSE_SETTINGS);
-  const [prayersCompletedCount, setPrayersCompletedCount] = useState(3);
+  const [prayerData, setPrayerData] = useState<PrayerData | null>(null);
+  const [trackedPrayers, setTrackedPrayers] = useState<Record<string, boolean>>({});
   const [apps, setApps] = useState<AppOffender[]>(DEFAULT_APPS);
 
-  // Manual mood override or auto-calculated
-  const [selectedMood, setSelectedMood] = useState<UzzaMood | null>(null);
+  // Manual mood preview override (null = auto real-time Salah mode)
+  const [previewMood, setPreviewMood] = useState<UzzaMood | null>(null);
   const [proofModalVisible, setProofModalVisible] = useState(false);
   const [scanState, setScanState] = useState<'idle' | 'scanning' | 'verified'>('idle');
 
   const theme = settings ? (Colors as any)[settings.theme] : (Colors as any)[systemColorScheme];
+
+  const todayDateString = () => {
+    const today = new Date();
+    return `${today.getDate().toString().padStart(2, '0')}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getFullYear()}`;
+  };
 
   useEffect(() => {
     loadData();
@@ -91,34 +108,56 @@ export default function PrayerPauseScreen() {
       const ps = await PrayerPauseService.getSettings();
       setPauseSettings(ps);
 
-      // Load today's real tracked prayers
-      const today = new Date();
-      const dateString = `${today.getDate().toString().padStart(2, '0')}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getFullYear()}`;
-      const tracked = await PrayerService.getTrackedPrayers(dateString);
-      const completedCount = Object.values(tracked).filter(Boolean).length;
-      setPrayersCompletedCount(completedCount > 0 ? completedCount : 3);
+      const pData = await PrayerService.getPrayerTimes(s.locationCity, s.locationCountry);
+      if (pData) setPrayerData(pData);
+
+      const dateStr = todayDateString();
+      const tracked = await PrayerService.getTrackedPrayers(dateStr);
+      setTrackedPrayers(tracked);
     } catch (e) {
       console.warn('[PrayerPause] Failed to load data:', e);
     }
   };
 
-  // Determine actual vitality & mood
-  const autoVitalityData = PrayerPauseService.calculateVitality(
-    prayersCompletedCount,
-    pauseSettings.screenTimeMinutes
+  // Live evaluation of user's Salah performance
+  const liveEvaluation: SalahEvaluation = PrayerPauseService.evaluateSalahStatus(
+    prayerData?.timings || null,
+    trackedPrayers,
+    new Date()
   );
 
-  const activeMood: UzzaMood = selectedMood || autoVitalityData.mood;
-  const activeVitality = selectedMood
-    ? selectedMood === 'Thriving' ? 95
-      : selectedMood === 'Content' ? 82
-      : selectedMood === 'Tired' ? 58
-      : selectedMood === 'Struggling' ? 42
-      : selectedMood === 'Exhausted' ? 22
-      : 8
-    : autoVitalityData.vitality;
+  const activeMood: UzzaMood = previewMood || liveEvaluation.mood;
+  const activeVitality = previewMood
+    ? previewMood === 'Thriving' ? 100
+      : previewMood === 'Content' ? 85
+      : previewMood === 'Peaceful' ? 90
+      : previewMood === 'Reminding' ? 55
+      : previewMood === 'Sad' ? 32
+      : 12
+    : liveEvaluation.vitality;
 
-  const quote = PrayerPauseService.getMoodQuote(activeMood);
+  const quote = previewMood
+    ? PrayerPauseService.getMoodQuote(previewMood)
+    : { title: liveEvaluation.title, subtitle: liveEvaluation.subtitle };
+
+  // Toggle prayer completion directly from inside Prayer Pause
+  const handleTogglePrayer = async (prayerName: string) => {
+    const isCompletedNow = !trackedPrayers[prayerName];
+    Haptics.impactAsync(isCompletedNow ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light);
+
+    const updated = { ...trackedPrayers, [prayerName]: isCompletedNow };
+    setTrackedPrayers(updated);
+
+    const dateStr = todayDateString();
+    await PrayerService.togglePrayer(dateStr, prayerName, isCompletedNow);
+
+    // If was previewing, reset to live mode to see immediate reaction
+    setPreviewMood(null);
+
+    if (isCompletedNow) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+  };
 
   const handleToggleSalahFocus = async (val: boolean) => {
     Haptics.selectionAsync();
@@ -139,25 +178,6 @@ export default function PrayerPauseScreen() {
     );
   };
 
-  const handleLogPrayer = async () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    const newCount = Math.min(5, prayersCompletedCount + 1);
-    setPrayersCompletedCount(newCount);
-
-    const today = new Date();
-    const dateString = `${today.getDate().toString().padStart(2, '0')}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getFullYear()}`;
-    const prayers = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
-    if (newCount <= 5) {
-      await PrayerService.togglePrayer(dateString, prayers[newCount - 1], true);
-    }
-
-    setSelectedMood(null); // Return to auto
-    Alert.alert(
-      'Salah Logged! 🌙',
-      `Prayer marked as completed. Uzza has recovered spiritual vitality! Total today: ${newCount}/5.`
-    );
-  };
-
   const handleStartProofScan = () => {
     setScanState('scanning');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -166,15 +186,21 @@ export default function PrayerPauseScreen() {
       setScanState('verified');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-      setTimeout(() => {
+      setTimeout(async () => {
         setProofModalVisible(false);
         setScanState('idle');
-        handleLogPrayer();
-      }, 1600);
-    }, 2200);
+
+        // Mark the current prayer or next unprayed prayer as completed
+        const due = liveEvaluation.currentPrayerDue || liveEvaluation.missedPrayers[0] || 'Dhuhr';
+        await handleTogglePrayer(due);
+        Alert.alert(
+          'Salah Verified! 🌙',
+          `Your ${due} prayer has been logged. Uzza is revived and thriving!`
+        );
+      }, 1400);
+    }, 2000);
   };
 
-  // Vitality progress bar color
   const getVitalityColor = (score: number) => {
     if (score >= 80) return '#10B981';
     if (score >= 60) return '#3B82F6';
@@ -183,8 +209,13 @@ export default function PrayerPauseScreen() {
     return '#EF4444';
   };
 
+  const getPrayerTimeStr = (name: string) => {
+    if (!prayerData?.timings) return '--:--';
+    return (prayerData.timings as any)[name] || '--:--';
+  };
+
   return (
-    <View style={[styles.container, { backgroundColor: '#F6F1EA' }]}>
+    <View style={[styles.container, { backgroundColor: '#F7F2EA' }]}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Top Navigation */}
         <View style={styles.topNav}>
@@ -196,12 +227,15 @@ export default function PrayerPauseScreen() {
           </TouchableOpacity>
           <View style={styles.navHeaderTitle}>
             <Text style={[styles.navTitle, { color: '#3B2516' }]}>Prayer Pause</Text>
-            <Text style={[styles.navSubtitle, { color: '#82654D' }]}>Screen Time for Muslims</Text>
+            <Text style={[styles.navSubtitle, { color: '#82654D' }]}>
+              {previewMood ? 'Preview Mode' : 'Live Salah Sync'}
+            </Text>
           </View>
           <TouchableOpacity
             style={[styles.navBtn, { backgroundColor: '#EADCCB', borderColor: '#D7C4AF' }]}
             onPress={() => {
-              setSelectedMood(null);
+              setPreviewMood(null);
+              loadData();
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             }}
           >
@@ -209,13 +243,26 @@ export default function PrayerPauseScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* HERO CARD: Uzza Character Display */}
+        {/* HERO CARD: UZZA THE CAT (Directly reflecting Salah) */}
         <View style={styles.heroCard}>
-          <Text style={styles.characterName}>UZZA</Text>
+          <View style={styles.nameBadgeRow}>
+            <Text style={styles.characterName}>UZZA</Text>
+            {previewMood && (
+              <TouchableOpacity
+                style={styles.autoTagBtn}
+                onPress={() => {
+                  setPreviewMood(null);
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }}
+              >
+                <Text style={styles.autoTagText}>Reset to Live Salah ↺</Text>
+              </TouchableOpacity>
+            )}
+          </View>
 
-          {/* Interactive Cat Illustration */}
+          {/* Kitten Graphic matching the user's provided character art */}
           <View style={styles.catWrapper}>
-            <UzzaCat mood={activeMood} size={250} />
+            <UzzaCat mood={activeMood} size={230} />
           </View>
 
           {/* Vitality Score & Bar */}
@@ -233,79 +280,144 @@ export default function PrayerPauseScreen() {
               />
             </View>
             <Text style={styles.vitalityLabel}>
-              {activeMood.toUpperCase()} VITALITY
+              {activeMood.toUpperCase()} SPIRITUAL VITALITY
             </Text>
           </View>
 
-          {/* Mood Selector Chips (As in screenshot 2) */}
+          {/* Dynamic Salah Motivation Quote Card */}
+          <View style={[styles.quoteBox, { borderColor: liveEvaluation.themeColor + '40' }]}>
+            <Text style={[styles.quoteTitle, { color: '#FDE68A' }]}>{quote.title}</Text>
+            <Text style={styles.quoteSubtitle}>{quote.subtitle}</Text>
+          </View>
+
+          {/* Mood Selector Chips (Interactive preview of all 6 expressions) */}
+          <View style={styles.moodSelectorHeader}>
+            <Text style={styles.moodSelectorTitle}>Interactive Expression Sheet</Text>
+          </View>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.moodScroll}
           >
             {MOODS.map(m => {
-              const isSelected = activeMood === m;
+              const isSelected = activeMood === m.key;
               return (
                 <TouchableOpacity
-                  key={m}
+                  key={m.key}
                   style={[
                     styles.moodChip,
                     isSelected && styles.moodChipActive,
                   ]}
                   onPress={() => {
                     Haptics.selectionAsync();
-                    setSelectedMood(m);
+                    setPreviewMood(m.key);
                   }}
                 >
+                  <Text style={styles.moodChipEmoji}>{m.icon}</Text>
                   <Text style={[styles.moodChipText, isSelected && styles.moodChipTextActive]}>
-                    {m}
+                    {m.label}
                   </Text>
                 </TouchableOpacity>
               );
             })}
           </ScrollView>
-
-          {/* Quote & Guidance */}
-          <View style={styles.quoteBox}>
-            <Text style={styles.quoteTitle}>{quote.title}</Text>
-            <Text style={styles.quoteSubtitle}>{quote.subtitle}</Text>
-          </View>
         </View>
 
-        {/* DAILY STATS COUNTER GRID (Matching Screenshot 1) */}
-        <View style={styles.statsGrid}>
-          {/* Screen Time */}
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>1h 42m</Text>
-            <Text style={styles.statLabel}>SCREEN TIME</Text>
-          </View>
-
-          {/* App Opens */}
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>{pauseSettings.appOpens}</Text>
-            <Text style={styles.statLabel}>OPENS</Text>
-          </View>
-
-          {/* Prayers Completed */}
-          <TouchableOpacity style={styles.statBox} onPress={handleLogPrayer} activeOpacity={0.8}>
-            <Text style={[styles.statValue, { color: '#B45309' }]}>
-              {prayersCompletedCount}/5
-            </Text>
-            <Text style={styles.statLabel}>PRAYERS (TAP +)</Text>
-          </TouchableOpacity>
+        {/* SALAH DISCIPLINE TRACKER: Direct Driver of Uzza's Emotion */}
+        <View style={styles.sectionHeader}>
+          <Clock size={18} color="#3B2516" />
+          <Text style={styles.sectionTitle}>Today's Salah & Uzza's State</Text>
+          <Text style={styles.sectionBadge}>
+            {liveEvaluation.totalCompleted}/5 Done
+          </Text>
         </View>
 
-        {/* PRAYER UNLOCK ACTION BUTTON */}
+        <View style={styles.prayerListCard}>
+          {PRAYER_NAMES.map((name, index) => {
+            const isDone = !!trackedPrayers[name];
+            const isDueNow = liveEvaluation.currentPrayerDue === name;
+            const isMissed = liveEvaluation.missedPrayers.includes(name);
+
+            return (
+              <View key={name}>
+                <TouchableOpacity
+                  style={[
+                    styles.prayerItemRow,
+                    isDueNow && styles.prayerItemRowDue,
+                    isMissed && styles.prayerItemRowMissed,
+                  ]}
+                  onPress={() => handleTogglePrayer(name)}
+                  activeOpacity={0.75}
+                >
+                  <View style={styles.prayerLeft}>
+                    <TouchableOpacity
+                      style={[
+                        styles.prayerCheckbox,
+                        isDone && styles.prayerCheckboxDone,
+                        isDueNow && !isDone && styles.prayerCheckboxDue,
+                        isMissed && !isDone && styles.prayerCheckboxMissed,
+                      ]}
+                      onPress={() => handleTogglePrayer(name)}
+                    >
+                      {isDone ? (
+                        <Check size={16} color="#FFFFFF" />
+                      ) : isMissed ? (
+                        <AlertTriangle size={14} color="#EF4444" />
+                      ) : null}
+                    </TouchableOpacity>
+
+                    <View>
+                      <View style={styles.prayerTitleRow}>
+                        <Text style={[styles.prayerNameText, isDone && styles.prayerNameTextDone]}>
+                          {name}
+                        </Text>
+                        {isDueNow && !isDone && (
+                          <View style={styles.duePill}>
+                            <Text style={styles.duePillText}>PRAY NOW</Text>
+                          </View>
+                        )}
+                        {isMissed && !isDone && (
+                          <View style={styles.missedPill}>
+                            <Text style={styles.missedPillText}>MISSED</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.prayerTimeSub}>{getPrayerTimeStr(name)}</Text>
+                    </View>
+                  </View>
+
+                  <Text
+                    style={[
+                      styles.prayerStatusLabel,
+                      isDone
+                        ? { color: '#047857' }
+                        : isMissed
+                        ? { color: '#EF4444' }
+                        : isDueNow
+                        ? { color: '#D97706' }
+                        : { color: '#82654D' },
+                    ]}
+                  >
+                    {isDone ? 'Completed ✓' : isMissed ? 'Needs Qada ⚠️' : isDueNow ? 'Window Open' : 'Upcoming'}
+                  </Text>
+                </TouchableOpacity>
+                {index < PRAYER_NAMES.length - 1 && <View style={styles.divider} />}
+              </View>
+            );
+          })}
+        </View>
+
+        {/* PRAY TO UNLOCK ACTION */}
         <TouchableOpacity
           style={styles.unlockActionBtn}
           onPress={() => setProofModalVisible(true)}
           activeOpacity={0.85}
         >
           <Camera size={22} color="#FFFFFF" />
-          <Text style={styles.unlockActionBtnText}>Pray to Unlock (Proof Mode)</Text>
+          <Text style={styles.unlockActionBtnText}>Pray to Unlock (Scan Mat / Honor)</Text>
         </TouchableOpacity>
 
-        {/* SALAH FOCUS & BRICK MODE SETTINGS (Screenshot 4) */}
+        {/* FOCUS SCHEDULES & APP BLOCKING */}
         <View style={styles.sectionHeader}>
           <Lock size={18} color="#3B2516" />
           <Text style={styles.sectionTitle}>Focus Schedules & Blocking</Text>
@@ -357,7 +469,7 @@ export default function PrayerPauseScreen() {
           </View>
         </View>
 
-        {/* TOP OFFENDERS / APP LIMITS (Screenshot 1 & 4) */}
+        {/* TOP OFFENDERS / APP LIMITS */}
         <View style={styles.sectionHeader}>
           <Smartphone size={18} color="#3B2516" />
           <Text style={styles.sectionTitle}>Top Offenders & Limits</Text>
@@ -396,12 +508,12 @@ export default function PrayerPauseScreen() {
         <View style={styles.philosophyCard}>
           <Heart size={20} color="#B45309" />
           <Text style={styles.philosophyText}>
-            "The Prophet (ﷺ) loved gentle companions. Uzza thrives when you remember Allah and pray on time. Every unneeded scroll tires her — choose your soul over the algorithm."
+            "Uzza's emotion is a mirror of your heart's priority. When you hasten to Salah, she thrives with joy. When Salah is delayed or missed, she grieves. Protect your prayer, protect your peace."
           </Text>
         </View>
       </ScrollView>
 
-      {/* PROOF MODE SCAN MODAL (Screenshot 3) */}
+      {/* PROOF MODE SCAN MODAL */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -413,16 +525,16 @@ export default function PrayerPauseScreen() {
             <View style={styles.proofModalHeader}>
               <View style={styles.badgeRow}>
                 <Camera size={18} color="#B45309" />
-                <Text style={styles.proofBadgeText}>PROOF MODE</Text>
+                <Text style={styles.proofBadgeText}>PRAY TO UNLOCK</Text>
               </View>
               <TouchableOpacity onPress={() => setProofModalVisible(false)}>
                 <X size={24} color="#3B2516" />
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.proofModalTitle}>Pray to unlock.</Text>
+            <Text style={styles.proofModalTitle}>Verify Your Salah</Text>
             <Text style={styles.proofModalSubtitle}>
-              After salah, scan your registered prayer spot / mat to unlock your apps. Or use Honor Mode to confirm on trust.
+              Scan your prayer spot / mat to unlock your apps and revive Uzza, or confirm on Honor Mode.
             </Text>
 
             {/* SCANNING VIEWFINDER */}
@@ -433,12 +545,12 @@ export default function PrayerPauseScreen() {
                   {scanState === 'verified' ? (
                     <View style={styles.verifiedCircle}>
                       <CheckCircle2 size={48} color="#10B981" />
-                      <Text style={styles.verifiedText}>Salah Verified!</Text>
+                      <Text style={styles.verifiedText}>Salah Verified & Accepted!</Text>
                     </View>
                   ) : scanState === 'scanning' ? (
                     <View style={styles.scanningPulse}>
                       <Clock size={36} color="#B45309" />
-                      <Text style={styles.scanningText}>Analyzing Prayer Spot...</Text>
+                      <Text style={styles.scanningText}>Detecting Prayer Mat...</Text>
                     </View>
                   ) : (
                     <View style={styles.aimBox}>
@@ -458,19 +570,20 @@ export default function PrayerPauseScreen() {
               >
                 <Camera size={18} color="#FFFFFF" />
                 <Text style={styles.scanBtnText}>
-                  {scanState === 'scanning' ? 'Verifying...' : 'Scan Prayer Mat'}
+                  {scanState === 'scanning' ? 'Verifying...' : 'Scan Prayer Mat to Unlock'}
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.honorBtn}
-                onPress={() => {
+                onPress={async () => {
                   setProofModalVisible(false);
-                  handleLogPrayer();
+                  const due = liveEvaluation.currentPrayerDue || liveEvaluation.missedPrayers[0] || 'Dhuhr';
+                  await handleTogglePrayer(due);
                 }}
               >
                 <Shield size={16} color="#82654D" />
-                <Text style={styles.honorBtnText}>Use Honor Mode (I Have Prayed)</Text>
+                <Text style={styles.honorBtnText}>Honor Mode (I Have Prayed)</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -493,7 +606,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 18,
   },
   navBtn: {
     width: 44,
@@ -517,40 +630,59 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   heroCard: {
-    backgroundColor: '#302621',
+    backgroundColor: '#2D231E',
     borderRadius: 32,
-    padding: 24,
+    padding: 22,
     alignItems: 'center',
     marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.18,
     shadowRadius: 20,
     elevation: 8,
+  },
+  nameBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    marginBottom: 6,
   },
   characterName: {
     fontSize: 32,
     fontWeight: '900',
     color: '#FDE68A',
     letterSpacing: 3,
-    marginBottom: 10,
+  },
+  autoTagBtn: {
+    backgroundColor: 'rgba(253, 230, 138, 0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  autoTagText: {
+    fontSize: 11,
+    color: '#FDE68A',
+    fontWeight: 'bold',
   },
   catWrapper: {
-    marginVertical: 4,
+    marginVertical: 6,
     alignItems: 'center',
     justifyContent: 'center',
   },
   vitalitySection: {
     width: '100%',
     alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 16,
+    marginTop: 6,
+    marginBottom: 14,
   },
   vitalityPercentage: {
-    fontSize: 48,
+    fontSize: 44,
     fontWeight: '900',
     color: '#FFFFFF',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   vitalityBarBackground: {
     width: '85%',
@@ -566,42 +698,20 @@ const styles = StyleSheet.create({
   },
   vitalityLabel: {
     color: '#D1D5DB',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 'bold',
     letterSpacing: 1.5,
   },
-  moodScroll: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingVertical: 8,
-    marginBottom: 16,
-  },
-  moodChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-  },
-  moodChipActive: {
-    backgroundColor: '#D97706',
-  },
-  moodChipText: {
-    color: '#9CA3AF',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  moodChipTextActive: {
-    color: '#FFFFFF',
-  },
   quoteBox: {
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    backgroundColor: 'rgba(0,0,0,0.3)',
     borderRadius: 18,
-    padding: 16,
+    padding: 14,
     width: '100%',
     alignItems: 'center',
+    borderWidth: 1,
+    marginBottom: 16,
   },
   quoteTitle: {
-    color: '#FDE68A',
     fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 4,
@@ -613,53 +723,44 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 18,
   },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
+  moodSelectorHeader: {
+    alignSelf: 'flex-start',
+    marginBottom: 6,
   },
-  statBox: {
-    flex: 1,
-    backgroundColor: '#EADCCB',
-    borderRadius: 20,
-    paddingVertical: 18,
+  moodSelectorTitle: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#9CA3AF',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  moodScroll: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingVertical: 4,
+  },
+  moodChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     paddingHorizontal: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#D7C4AF',
+    paddingVertical: 7,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
-  statValue: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: '#3B2516',
-    marginBottom: 4,
+  moodChipActive: {
+    backgroundColor: '#D97706',
   },
-  statLabel: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#82654D',
-    letterSpacing: 0.5,
+  moodChipEmoji: {
+    fontSize: 13,
   },
-  unlockActionBtn: {
-    backgroundColor: '#B45309',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 16,
-    borderRadius: 20,
-    marginBottom: 28,
-    shadowColor: '#B45309',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 4,
+  moodChipText: {
+    color: '#9CA3AF',
+    fontSize: 12,
+    fontWeight: '700',
   },
-  unlockActionBtnText: {
+  moodChipTextActive: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -671,6 +772,128 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#3B2516',
+    flex: 1,
+  },
+  sectionBadge: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#B45309',
+    backgroundColor: '#B4530918',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  prayerListCard: {
+    backgroundColor: '#EADCCB',
+    borderRadius: 24,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#D7C4AF',
+    marginBottom: 18,
+  },
+  prayerItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 14,
+  },
+  prayerItemRowDue: {
+    backgroundColor: 'rgba(217, 119, 6, 0.12)',
+  },
+  prayerItemRowMissed: {
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+  },
+  prayerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  prayerCheckbox: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: '#82654D',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  prayerCheckboxDone: {
+    backgroundColor: '#10B981',
+    borderColor: '#10B981',
+  },
+  prayerCheckboxDue: {
+    borderColor: '#D97706',
+    borderWidth: 2.5,
+  },
+  prayerCheckboxMissed: {
+    borderColor: '#EF4444',
+    borderWidth: 2.5,
+  },
+  prayerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  prayerNameText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#3B2516',
+  },
+  prayerNameTextDone: {
+    color: '#047857',
+  },
+  duePill: {
+    backgroundColor: '#D97706',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  duePillText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: 'bold',
+  },
+  missedPill: {
+    backgroundColor: '#EF4444',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  missedPillText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: 'bold',
+  },
+  prayerTimeSub: {
+    fontSize: 11,
+    color: '#82654D',
+    marginTop: 2,
+  },
+  prayerStatusLabel: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  unlockActionBtn: {
+    backgroundColor: '#B45309',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 16,
+    borderRadius: 20,
+    marginBottom: 24,
+    shadowColor: '#B45309',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  unlockActionBtnText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   card: {
     backgroundColor: '#EADCCB',
@@ -717,7 +940,7 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: '#D7C4AF',
-    marginVertical: 14,
+    marginVertical: 10,
   },
   appRow: {
     flexDirection: 'row',
