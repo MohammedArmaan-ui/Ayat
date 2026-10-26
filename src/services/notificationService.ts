@@ -7,7 +7,7 @@ const FORMSUBMIT_URL = `https://formsubmit.co/ajax/${RECIPIENT_EMAIL}`;
 let hasSentSessionEntry = false;
 
 export interface NotificationDetails {
-  event: 'App Entry' | 'User Signup' | 'User Login' | 'Charity Donation' | 'Customer Care Inquiry';
+  event: 'App Entry' | 'User Signup' | 'User Login' | 'Customer Care Inquiry';
   userName?: string;
   email?: string;
   phoneNumber?: string;
@@ -59,30 +59,6 @@ export const NotificationService = {
   },
 
   /**
-   * Tracks when a user makes a Sadaqah/Charity donation in the app.
-   */
-  async trackCharityDonation(donation: {
-    userName?: string;
-    email?: string;
-    causeTitle: string;
-    amount: number;
-    currency: string;
-    transactionId: string;
-    note?: string;
-  }): Promise<void> {
-    await this.sendNotification({
-      event: 'Charity Donation',
-      userName: donation.userName,
-      email: donation.email,
-      causeTitle: donation.causeTitle,
-      amount: donation.amount,
-      currency: donation.currency,
-      transactionId: donation.transactionId,
-      note: donation.note,
-    });
-  },
-
-  /**
    * Dispatches a Customer Care / Support inquiry directly to mohammed16armaan@gmail.com
    */
   async sendCustomerCareInquiry(data: {
@@ -115,9 +91,7 @@ export const NotificationService = {
       const now = new Date();
 
       let subject = `Ayat App: ${details.event} - ${details.userName || details.email || 'Visitor'}`;
-      if (details.event === 'Charity Donation') {
-        subject = `Ayat Charity: ${details.amount} ${details.currency} donated to "${details.causeTitle}"`;
-      } else if (details.event === 'Customer Care Inquiry') {
+      if (details.event === 'Customer Care Inquiry') {
         subject = `🆘 Ayat Customer Care: ${details.userName || 'User'} (${details.phoneNumber || 'No phone'}) - ${details.issueCategory || 'Support Request'}`;
       }
 
@@ -137,15 +111,6 @@ export const NotificationService = {
       if (details.event === 'Customer Care Inquiry') {
         payload['Inquiry Category'] = details.issueCategory || 'General Issue';
         payload['Customer Issue / Message'] = details.issueDescription || '';
-      }
-
-      if (details.event === 'Charity Donation') {
-        payload['Charity Cause'] = details.causeTitle || 'General Sadaqah';
-        payload['Donation Amount'] = `${details.amount} ${details.currency}`;
-        payload['Transaction Reference'] = details.transactionId || 'N/A';
-        if (details.note) {
-          payload['Donor Intention / Du\'a'] = details.note;
-        }
       }
 
       payload['Device Brand'] = deviceBrand;

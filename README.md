@@ -36,12 +36,6 @@
 - **Proof Mode ("Pray to Unlock")**: Complete your prayer and scan your prayer mat to unlock apps, or confirm with Honor Mode.
 - **Brick Mode**: Maximum digital detox for deep worship and Quran recitation.
 
-### 🤝 Charity & Sadaqah Hub
-- **Vetted Islamic Causes**: Verified campaigns for Gaza Emergency Relief, Clean Water Wells (Sadaqah Jariyah), Orphan Sponsorship, Food Rations, and Mosque Construction.
-- **Interactive Donation Flow**: Preset amounts and custom giving with currency support, anonymous donation options, and personal Du'a/intention notes.
-- **Giving History & Impact Summary**: Local SQLite tracking of total donations, causes supported, and instant official receipt generation.
-- **Admin Email Dispatch**: Every donation is asynchronously recorded and dispatched to the administrator.
-
 ### 📿 Smart Digital Tasbih
 - **Interactive Counter**: Touch-anywhere digital beads with realistic haptic vibration and sound effects.
 - **Multiple Built-in Dhikr**: SubhanAllah, Alhamdulillah, Allahu Akbar, Astaghfirullah, and custom phrases.
@@ -144,7 +138,6 @@ Ayat/
 │   │   └── tools.tsx         # Islamic utilities & tools directory
 │   ├── adhkar.tsx            # Daily Adhkar and supplications
 │   ├── calendar.tsx          # Hijri / Gregorian Islamic calendar
-│   ├── charity.tsx           # Charity & Sadaqah Hub
 │   ├── customer-care.tsx     # Customer Care & User Support inquiry screen
 │   ├── names-of-allah.tsx    # 99 Names of Allah browser
 │   ├── prayer-pause.tsx      # Screen Time for Muslims (featuring Uzza the cat)

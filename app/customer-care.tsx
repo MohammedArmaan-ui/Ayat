@@ -37,7 +37,6 @@ const CATEGORIES = [
   'App Bug / Crash',
   'Prayer Times',
   'Quran & Audio',
-  'Charity & Donations',
   'Feature Request',
 ];
 
