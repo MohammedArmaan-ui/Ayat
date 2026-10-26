@@ -10,6 +10,11 @@ export default function Index() {
 
   useEffect(() => {
     checkAuth();
+    // Safety fallback: if auth resolution takes more than 1 second, proceed to prevent blank/frozen screen
+    const timer = setTimeout(() => {
+      setIsAuthenticated(prev => (prev === null ? false : prev));
+    }, 1000);
+    return () => clearTimeout(timer);
   }, []);
 
   const checkAuth = async () => {

@@ -33,12 +33,17 @@ export default function LoginScreen() {
   };
 
   const checkBiometrics = async () => {
-    const hasUsers = await AuthService.hasUsers();
-    if (!hasUsers) return;
+    try {
+      const hasUsers = await AuthService.hasUsers();
+      if (!hasUsers) return;
 
-    const hasHardware = await LocalAuthentication.hasHardwareAsync();
-    const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-    setCanUseBiometrics(hasHardware && isEnrolled);
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+      setCanUseBiometrics(hasHardware && isEnrolled);
+    } catch (e) {
+      console.warn('Biometrics check error:', e);
+      setCanUseBiometrics(false);
+    }
   };
 
   const handleLogin = async () => {
@@ -123,6 +128,16 @@ export default function LoginScreen() {
             onPress={handleLogin}
           >
             <Text style={styles.loginButtonText}>Sign In</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.guestButton, { borderColor: theme.border }]}
+            onPress={async () => {
+              await SettingsService.updateSetting('isAuthenticated', true);
+              router.replace('/(tabs)');
+            }}
+          >
+            <Text style={[styles.guestButtonText, { color: theme.textSecondary }]}>Continue as Guest</Text>
           </TouchableOpacity>
 
           {canUseBiometrics && (
@@ -232,6 +247,18 @@ const styles = StyleSheet.create({
   },
   biometricButtonText: {
     fontSize: 16,
+    fontWeight: '600',
+  },
+  guestButton: {
+    height: 52,
+    borderRadius: 12,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  guestButtonText: {
+    fontSize: 15,
     fontWeight: '600',
   },
   signupContainer: {

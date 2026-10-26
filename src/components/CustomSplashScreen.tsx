@@ -1,40 +1,41 @@
 import React, { useEffect, useRef } from 'react';
-import { StyleSheet, View, Image, Animated, Dimensions, Text } from 'react-native';
+import { StyleSheet, View, Animated, Dimensions, Text, Pressable } from 'react-native';
 import { Colors } from '../theme/colors';
 
 const { height } = Dimensions.get('window');
 
 export function CustomSplashScreen({ onFinish }: { onFinish: () => void }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(20)).current;
-  const logoScale = useRef(new Animated.Value(0.8)).current;
+  const slideAnim = useRef(new Animated.Value(15)).current;
+  const logoScale = useRef(new Animated.Value(0.85)).current;
 
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 1000,
+        duration: 400,
         useNativeDriver: true,
       }),
       Animated.timing(slideAnim, {
         toValue: 0,
-        duration: 1000,
+        duration: 400,
         useNativeDriver: true,
       }),
       Animated.spring(logoScale, {
         toValue: 1,
-        friction: 4,
+        friction: 6,
         useNativeDriver: true,
       })
     ]).start();
 
+    // Fast, responsive splash: 1000ms total so user never feels frozen
     const timer = setTimeout(() => {
       Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: 800,
+        duration: 300,
         useNativeDriver: true,
       }).start(() => onFinish());
-    }, 3000);
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, []);
@@ -42,22 +43,24 @@ export function CustomSplashScreen({ onFinish }: { onFinish: () => void }) {
   const theme = Colors.light; // Using light emerald theme for splash
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim, backgroundColor: theme.primary }]}>
-      <View style={styles.content}>
-        <Animated.Image 
-          source={require('../../assets/images/icon.png')} 
-          style={[styles.logo, { transform: [{ scale: logoScale }] }]}
-          resizeMode="contain"
-        />
-        <Animated.View style={{ transform: [{ translateY: slideAnim }] }}>
-          <Text style={styles.appName}>Ayat</Text>
-        </Animated.View>
-      </View>
+    <Pressable style={styles.container} onPress={onFinish}>
+      <Animated.View style={[styles.inner, { opacity: fadeAnim, backgroundColor: theme.primary }]}>
+        <View style={styles.content}>
+          <Animated.Image 
+            source={require('../../assets/images/icon.png')} 
+            style={[styles.logo, { transform: [{ scale: logoScale }] }]}
+            resizeMode="contain"
+          />
+          <Animated.View style={{ transform: [{ translateY: slideAnim }] }}>
+            <Text style={styles.appName}>Ayat</Text>
+          </Animated.View>
+        </View>
 
-      <View style={styles.footer}>
-        <Text style={styles.bismillah}>Bismillah hir Rahman nir Rahim</Text>
-      </View>
-    </Animated.View>
+        <View style={styles.footer}>
+          <Text style={styles.bismillah}>Bismillah hir Rahman nir Rahim</Text>
+        </View>
+      </Animated.View>
+    </Pressable>
   );
 }
 
@@ -65,6 +68,9 @@ const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 9999,
+  },
+  inner: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },

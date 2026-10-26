@@ -23,7 +23,7 @@ export const unstable_settings = {
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
   const [dbReady, setDbReady] = useState(false);
@@ -35,6 +35,15 @@ export default function RootLayout() {
 
   // Consider fonts "ready" whether they loaded successfully or failed (use system fonts as fallback)
   const fontsReady = loaded || !!fontError;
+
+  // Hard safeguard: Never freeze on native splash under any circumstance
+  useEffect(() => {
+    const splashFailsafe = setTimeout(() => {
+      SplashScreen.hideAsync().catch(() => {});
+    }, 1500);
+
+    return () => clearTimeout(splashFailsafe);
+  }, []);
 
   useEffect(() => {
     if (fontError) {
@@ -59,14 +68,13 @@ export default function RootLayout() {
 
   useEffect(() => {
     async function setup() {
-      console.log('Starting setup...');
       try {
-        console.log('Initializing database...');
         await initDatabase();
-        console.log('Seeding initial data...');
-        await QuranService.seedInitialData();
-        console.log('Database ready!');
         setDbReady(true);
+        // Seed surahs asynchronously in the background so cold start is instantaneous
+        QuranService.seedInitialData().catch(e => {
+          console.error('Quran background seeding error:', e);
+        });
       } catch (e) {
         console.error('Database setup error:', e);
         setDbReady(true); // Proceed anyway to avoid permanent black screen
@@ -77,9 +85,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (fontsReady && dbReady) {
-      SplashScreen.hideAsync().catch(() => {
-        /* ignore */
-      });
+      SplashScreen.hideAsync().catch(() => {});
     }
   }, [fontsReady, dbReady]);
 

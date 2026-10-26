@@ -121,6 +121,9 @@ export const NotificationService = {
       payload['Date & Time'] = now.toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'medium' });
       payload['UTC Timestamp'] = now.toISOString();
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+
       const response = await fetch(FORMSUBMIT_URL, {
         method: 'POST',
         headers: {
@@ -129,7 +132,10 @@ export const NotificationService = {
           'Referer': 'https://formsubmit.co',
         },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       const res = await response.json().catch(() => null);
       console.log('[NotificationService] Dispatched:', details.event, res?.message || 'OK');
